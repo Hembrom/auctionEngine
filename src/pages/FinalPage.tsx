@@ -1,10 +1,12 @@
 import { Layout } from '../components/Layout';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
-import type { Captain } from '../types';
+import type { Captain, Position } from '../types';
+
+const POSITION_ORDER: Position[] = ['GK', 'DEF', 'MID', 'ST'];
 
 function TeamCard({ captain }: { captain: Captain }) {
-  const byPosition = { GK: [], DEF: [], MID: [], ST: [] } as Record<string, typeof captain.squad>;
+  const byPosition = { GK: [], DEF: [], MID: [], ST: [] } as Record<Position, typeof captain.squad>;
   for (const p of captain.squad) {
     byPosition[p.position].push(p);
   }
@@ -15,24 +17,25 @@ function TeamCard({ captain }: { captain: Captain }) {
         <h3>{captain.teamName}</h3>
         <span className="muted">{captain.name}</span>
       </div>
-      <p>
-        Remaining budget: <strong>₹{captain.budget}</strong> · {captain.squad.length}/7 players
+      <p className="team-meta">
+        Budget left: <strong>₹{captain.budget}</strong> · {captain.squad.length}/7
       </p>
-      <div className="team-squad">
-        {(['GK', 'DEF', 'MID', 'ST'] as const).map((pos) => (
-          <div key={pos} className="squad-position">
-            <h4>{pos}</h4>
-            {byPosition[pos].length === 0 ? (
-              <p className="muted">—</p>
-            ) : (
-              <ul>
-                {byPosition[pos].map((p) => (
-                  <li key={p.playerId}>
-                    {p.name} <span className="muted">₹{p.price}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+      <div className="team-squad-rows">
+        {POSITION_ORDER.map((pos) => (
+          <div key={pos} className="team-squad-row">
+            <span className={`team-pos-label pos-tag pos-${pos.toLowerCase()}`}>{pos}</span>
+            <div className="team-pos-players">
+              {byPosition[pos].length === 0 ? (
+                <span className="muted">—</span>
+              ) : (
+                byPosition[pos].map((p) => (
+                  <div key={p.playerId} className="team-player-line">
+                    <span>{p.name}</span>
+                    <span className="muted">₹{p.price}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         ))}
       </div>
