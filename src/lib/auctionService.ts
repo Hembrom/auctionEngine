@@ -25,18 +25,17 @@ import type {
 import {
   STARTING_BID,
   STARTING_BUDGET,
-  TIMER_SECONDS,
-  RESULT_SECONDS,
 } from '../types';
 import {
   assignPosition,
+  areAllSquadsFull,
   buildPlayerQueue,
   createDefaultAuctionState,
   formatSoldMessage,
   isAuctionComplete,
 } from './auctionLogic';
 import { isValidRoomSlug, slugifyRoomName } from './roomUtils';
-import { isAuctionPaused } from './auctionState';
+import { getBidTimerSeconds, getResultTimerSeconds, isAuctionPaused } from './auctionState';
 
 function roomPaths(roomId: string) {
   return {
@@ -221,7 +220,20 @@ export async function moveToLobby(roomId: string, startingBudget: number) {
   await updateDoc(roomPaths(roomId).room, { phase: 'lobby', startingBudget });
 }
 
+export async function updateTimerSettings(
+  roomId: string,
+  bidTimerSeconds: number,
+  resultTimerSeconds: number,
+): Promise<void> {
+  await updateDoc(roomPaths(roomId).room, {
+    bidTimerSeconds: Math.max(5, Math.round(bidTimerSeconds)),
+    resultTimerSeconds: Math.max(3, Math.round(resultTimerSeconds)),
+  });
+}
+
 export async function startAuction(roomId: string, players: Player[]) {
+  const room = await getRoom(roomId);
+  const bidSeconds = getBidTimerSeconds(room ?? createDefaultAuctionState());
   const queue = buildPlayerQueue(players);
   const firstPlayerId = queue[0] ?? null;
 
@@ -233,7 +245,7 @@ export async function startAuction(roomId: string, players: Player[]) {
     currentIndex: 0,
     currentPlayerId: firstPlayerId,
     currentBid: null,
-    bidDeadline: firstPlayerId ? Date.now() + TIMER_SECONDS * 1000 : null,
+    bidDeadline: firstPlayerId ? Date.now() + bidSeconds * 1000 : null,
     resultDisplay: null,
     resultEndsAt: null,
     paused: false,
@@ -263,7 +275,7 @@ export async function placeBid(
 
       transaction.update(paths.room, {
         currentBid: { amount, captainId, captainName },
-        bidDeadline: Date.now() + TIMER_SECONDS * 1000,
+        bidDeadline: Date.now() + getBidTimerSeconds(state) * 1000,
       });
     });
 
@@ -343,7 +355,7 @@ export async function finalizeCurrentPlayer(
           captainId,
           amount,
         },
-        resultEndsAt: Date.now() + RESULT_SECONDS * 1000,
+        resultEndsAt: Date.now() + getResultTimerSeconds(data) * 1000,
         bidDeadline: null,
       });
       return;
@@ -353,7 +365,7 @@ export async function finalizeCurrentPlayer(
     tx.update(paths.room, {
       phase: 'result',
       resultDisplay: { message: 'Unsold', playerId },
-      resultEndsAt: Date.now() + RESULT_SECONDS * 1000,
+      resultEndsAt: Date.now() + getResultTimerSeconds(data) * 1000,
       bidDeadline: null,
       currentIndex: nextIndex,
     });
@@ -380,9 +392,10 @@ export async function advanceAfterResult(
     const nextIndex = data.currentIndex;
 
     if (isAuctionComplete(players, captains, queue, nextIndex)) {
-      if (!data.isUnsoldRound) {
-        const unsoldQueue = buildPlayerQueue(players, true);
-        if (unsoldQueue.length > 0) {
+      const unsoldQueue = buildPlayerQueue(players, true);
+
+      if (unsoldQueue.length > 0 && !areAllSquadsFull(captains)) {
+        if (!data.isUnsoldRound) {
           tx.update(paths.room, {
             phase: 'live',
             isUnsoldRound: true,
@@ -390,12 +403,25 @@ export async function advanceAfterResult(
             currentIndex: 0,
             currentPlayerId: unsoldQueue[0],
             currentBid: null,
-            bidDeadline: Date.now() + TIMER_SECONDS * 1000,
+            bidDeadline: Date.now() + getBidTimerSeconds(data) * 1000,
             resultDisplay: null,
             resultEndsAt: null,
           });
           return;
         }
+
+        tx.update(paths.room, {
+          phase: 'unsold',
+          isUnsoldRound: false,
+          currentPlayerId: null,
+          currentBid: null,
+          bidDeadline: null,
+          resultDisplay: null,
+          resultEndsAt: null,
+          paused: false,
+          pausedRemainingMs: null,
+        });
+        return;
       }
 
       tx.update(paths.room, {
@@ -415,7 +441,7 @@ export async function advanceAfterResult(
       currentIndex: nextIndex,
       currentPlayerId: nextPlayerId,
       currentBid: null,
-      bidDeadline: Date.now() + TIMER_SECONDS * 1000,
+      bidDeadline: Date.now() + getBidTimerSeconds(data) * 1000,
       resultDisplay: null,
       resultEndsAt: null,
     });
@@ -433,7 +459,7 @@ export async function pauseAuction(roomId: string): Promise<void> {
 
   const remaining = data.bidDeadline
     ? Math.max(3000, data.bidDeadline - Date.now())
-    : TIMER_SECONDS * 1000;
+    : getBidTimerSeconds(data) * 1000;
 
   await updateDoc(paths.room, {
     paused: true,
@@ -452,7 +478,7 @@ export async function resumeAuction(roomId: string): Promise<void> {
   const remaining =
     typeof data.pausedRemainingMs === 'number' && data.pausedRemainingMs > 0
       ? data.pausedRemainingMs
-      : TIMER_SECONDS * 1000;
+      : getBidTimerSeconds(data) * 1000;
 
   await updateDoc(paths.room, {
     paused: false,
@@ -480,7 +506,7 @@ export async function skipPlayer(roomId: string, state: AuctionState) {
   await updateDoc(paths.room, {
     phase: 'result',
     resultDisplay: { message: 'Unsold', playerId },
-    resultEndsAt: Date.now() + RESULT_SECONDS * 1000,
+    resultEndsAt: Date.now() + getResultTimerSeconds(state) * 1000,
     bidDeadline: null,
     currentBid: null,
     currentIndex: state.currentIndex + 1,
@@ -489,6 +515,43 @@ export async function skipPlayer(roomId: string, state: AuctionState) {
 
 export async function markUnsold(roomId: string, state: AuctionState) {
   await skipPlayer(roomId, state);
+}
+
+export async function restartUnsoldRound(roomId: string, players: Player[]): Promise<void> {
+  const paths = roomPaths(roomId);
+  const room = await getRoom(roomId);
+  const bidSeconds = getBidTimerSeconds(room ?? createDefaultAuctionState());
+  const unsoldQueue = buildPlayerQueue(players, true);
+  if (unsoldQueue.length === 0) {
+    throw new Error('No unsold players to auction');
+  }
+
+  await updateDoc(paths.room, {
+    phase: 'live',
+    isUnsoldRound: true,
+    unsoldQueue,
+    currentIndex: 0,
+    currentPlayerId: unsoldQueue[0],
+    currentBid: null,
+    bidDeadline: Date.now() + bidSeconds * 1000,
+    resultDisplay: null,
+    resultEndsAt: null,
+    paused: false,
+    pausedRemainingMs: null,
+  });
+}
+
+export async function endAuction(roomId: string): Promise<void> {
+  await updateDoc(roomPaths(roomId).room, {
+    phase: 'ended',
+    currentPlayerId: null,
+    bidDeadline: null,
+    currentBid: null,
+    resultDisplay: null,
+    resultEndsAt: null,
+    paused: false,
+    pausedRemainingMs: null,
+  });
 }
 
 export async function movePlayer(

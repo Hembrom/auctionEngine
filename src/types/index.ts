@@ -82,6 +82,10 @@ export interface AuctionState {
   resultDisplay: ResultDisplay | null;
   resultEndsAt: number | null;
   adminId: string | null;
+  /** Seconds captains have to bid on each player. Default 15. */
+  bidTimerSeconds?: number;
+  /** Seconds to show sold/unsold result before next player. Default 10. */
+  resultTimerSeconds?: number;
 }
 
 export interface PlayerFormData {

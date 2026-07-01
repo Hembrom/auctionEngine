@@ -54,6 +54,9 @@ export function JoinPage() {
             {loading ? 'Requesting...' : 'Request to Join'}
           </button>
           {error && <p className="error">{error}</p>}
+          <p className="muted join-alt-link">
+            Just watching? <a href={`/room/${roomId}/spectate`}>Enter as spectator</a>
+          </p>
         </form>
       </div>
     </Layout>

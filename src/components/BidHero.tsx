@@ -1,4 +1,4 @@
-import { STARTING_BID, TIMER_SECONDS, RESULT_SECONDS } from '../types';
+import { STARTING_BID } from '../types';
 import type { ResultDisplay } from '../types';
 import { CircularTimer } from './CircularTimer';
 
@@ -8,6 +8,8 @@ interface BidHeroProps {
   highBidder: string;
   bidCountdown: number;
   resultCountdown: number;
+  bidTimerSeconds: number;
+  resultTimerSeconds: number;
   paused: boolean;
   resultDisplay?: ResultDisplay | null;
 }
@@ -18,6 +20,8 @@ export function BidHero({
   highBidder,
   bidCountdown,
   resultCountdown,
+  bidTimerSeconds,
+  resultTimerSeconds,
   paused,
   resultDisplay,
 }: BidHeroProps) {
@@ -28,7 +32,7 @@ export function BidHero({
   const displayBid = currentBidAmount || STARTING_BID;
   const hasBid = currentBidAmount > 0;
   const timerSeconds = isResult ? resultCountdown : bidCountdown;
-  const timerTotal = isResult ? RESULT_SECONDS : TIMER_SECONDS;
+  const timerTotal = isResult ? resultTimerSeconds : bidTimerSeconds;
   const timerActive = phase === 'live' || isResult;
 
   return (

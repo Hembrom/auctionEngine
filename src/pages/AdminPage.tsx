@@ -5,6 +5,7 @@ import { PlayerCard } from '../components/PlayerCard';
 import { CaptainDashboard } from '../components/CaptainDashboard';
 import { BidFeed } from '../components/BidFeed';
 import { ShareRoomLinks } from '../components/ShareRoomLinks';
+import { UnsoldPlayersPanel } from '../components/UnsoldPlayersPanel';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine, useCountdown } from '../hooks/useAuctionEngine';
@@ -27,11 +28,14 @@ import {
   adjustBudget,
   addCaptainMidAuction,
   resetRoom,
+  restartUnsoldRound,
+  endAuction,
+  updateTimerSettings,
 } from '../lib/auctionService';
-import { parseCsvPlayers, validatePlayerPositions } from '../lib/auctionLogic';
-import { isAuctionPaused } from '../lib/auctionState';
+import { parseCsvPlayers, validatePlayerPositions, getUnsoldPlayers, areAllSquadsFull } from '../lib/auctionLogic';
+import { isAuctionPaused, getBidTimerSeconds, getResultTimerSeconds } from '../lib/auctionState';
 import type { PlayerFormData, Position } from '../types';
-import { STARTING_BUDGET } from '../types';
+import { STARTING_BUDGET, TIMER_SECONDS, RESULT_SECONDS } from '../types';
 
 const ALL_POSITIONS: Position[] = ['GK', 'DEF', 'MID', 'ST'];
 
@@ -40,6 +44,10 @@ export function AdminPage() {
   const { state, captains, players, loading, firebaseError } = useAuctionData(roomId);
   const navigate = useNavigate();
   const [startingBudget, setStartingBudget] = useState(STARTING_BUDGET);
+  const [bidTimerSeconds, setBidTimerSeconds] = useState(TIMER_SECONDS);
+  const [resultTimerSeconds, setResultTimerSeconds] = useState(RESULT_SECONDS);
+  const [timerSaveError, setTimerSaveError] = useState('');
+  const [timerSaveBusy, setTimerSaveBusy] = useState(false);
   const [csvError, setCsvError] = useState('');
   const [newCaptainName, setNewCaptainName] = useState('');
   const [movePlayerId, setMovePlayerId] = useState('');
@@ -49,6 +57,8 @@ export function AdminPage() {
   const [budgetAmount, setBudgetAmount] = useState('');
   const [pauseError, setPauseError] = useState('');
   const [pauseBusy, setPauseBusy] = useState(false);
+  const [unsoldActionError, setUnsoldActionError] = useState('');
+  const [unsoldActionBusy, setUnsoldActionBusy] = useState(false);
 
   const [form, setForm] = useState<PlayerFormData>({
     name: '',
@@ -63,6 +73,8 @@ export function AdminPage() {
   const isOwner = !!adminId && state.adminId === adminId;
   const pending = captains.filter((c) => c.status === 'pending');
   const approved = captains.filter((c) => c.status === 'approved');
+  const unsoldPlayers = getUnsoldPlayers(players);
+  const allSquadsFull = areAllSquadsFull(captains);
   const currentPlayer = players.find((p) => p.id === state.currentPlayerId);
   const isPaused = isAuctionPaused(state);
   const countdown = useCountdown(state.bidDeadline, isPaused, state.pausedRemainingMs);
@@ -74,6 +86,11 @@ export function AdminPage() {
       navigate(`/room/${roomId}/final`);
     }
   }, [state.phase, navigate, roomId]);
+
+  useEffect(() => {
+    setBidTimerSeconds(getBidTimerSeconds(state));
+    setResultTimerSeconds(getResultTimerSeconds(state));
+  }, [state.bidTimerSeconds, state.resultTimerSeconds]);
 
   const handlePauseToggle = async () => {
     if (pauseBusy) return;
@@ -92,6 +109,45 @@ export function AdminPage() {
       setPauseError((e as Error).message);
     } finally {
       setPauseBusy(false);
+    }
+  };
+
+  const handleRestartUnsold = async () => {
+    if (unsoldActionBusy) return;
+    setUnsoldActionBusy(true);
+    setUnsoldActionError('');
+    try {
+      await restartUnsoldRound(roomId, players);
+    } catch (e) {
+      setUnsoldActionError((e as Error).message);
+    } finally {
+      setUnsoldActionBusy(false);
+    }
+  };
+
+  const handleEndAuction = async () => {
+    if (unsoldActionBusy) return;
+    setUnsoldActionBusy(true);
+    setUnsoldActionError('');
+    try {
+      await endAuction(roomId);
+    } catch (e) {
+      setUnsoldActionError((e as Error).message);
+    } finally {
+      setUnsoldActionBusy(false);
+    }
+  };
+
+  const handleSaveTimers = async () => {
+    if (timerSaveBusy) return;
+    setTimerSaveBusy(true);
+    setTimerSaveError('');
+    try {
+      await updateTimerSettings(roomId, bidTimerSeconds, resultTimerSeconds);
+    } catch (e) {
+      setTimerSaveError((e as Error).message);
+    } finally {
+      setTimerSaveBusy(false);
     }
   };
 
@@ -197,6 +253,38 @@ export function AdminPage() {
               onChange={(e) => setStartingBudget(Number(e.target.value))}
             />
           </div>
+          <div className="form-row">
+            <label>Bid time per player (seconds)</label>
+            <input
+              type="number"
+              min={5}
+              value={bidTimerSeconds}
+              disabled={!['waiting', 'lobby'].includes(state.phase)}
+              onChange={(e) => setBidTimerSeconds(Number(e.target.value))}
+            />
+            <p className="muted config-hint">
+              How long captains have to bid. Default: {TIMER_SECONDS}s
+            </p>
+          </div>
+          <div className="form-row">
+            <label>Result display time (seconds)</label>
+            <input
+              type="number"
+              min={3}
+              value={resultTimerSeconds}
+              disabled={!['waiting', 'lobby'].includes(state.phase)}
+              onChange={(e) => setResultTimerSeconds(Number(e.target.value))}
+            />
+            <p className="muted config-hint">
+              How long sold/unsold info is shown before the next player. Default: {RESULT_SECONDS}s
+            </p>
+          </div>
+          {['waiting', 'lobby'].includes(state.phase) && (
+            <button type="button" onClick={handleSaveTimers} disabled={timerSaveBusy}>
+              {timerSaveBusy ? 'Saving…' : 'Save Timer Settings'}
+            </button>
+          )}
+          {timerSaveError && <p className="error">{timerSaveError}</p>}
           {state.phase === 'waiting' && approved.length > 0 && (
             <button onClick={() => moveToLobby(roomId, startingBudget)}>Open Lobby</button>
           )}
@@ -291,7 +379,37 @@ export function AdminPage() {
           </section>
         )}
 
-        {['live', 'result', 'unsold'].includes(state.phase) && (
+        {state.phase === 'unsold' && (
+          <UnsoldPlayersPanel
+            players={unsoldPlayers}
+            title="Unsold Players Remaining"
+            hint="The auction is paused. Redo the unsold round or finish when you are ready."
+            actions={
+              <>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleRestartUnsold}
+                  disabled={unsoldActionBusy || unsoldPlayers.length === 0 || allSquadsFull}
+                >
+                  {unsoldActionBusy ? '…' : '🔁 Redo Unsold Round'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEndAuction}
+                  disabled={unsoldActionBusy}
+                >
+                  ✅ Finish Auction
+                </button>
+              </>
+            }
+          />
+        )}
+        {unsoldActionError && state.phase === 'unsold' && (
+          <p className="error">{unsoldActionError}</p>
+        )}
+
+        {['live', 'result'].includes(state.phase) && (
           <section className="card admin-wide">
             <h3>Live Controls</h3>
             <div className="admin-controls">
@@ -314,7 +432,37 @@ export function AdminPage() {
           </section>
         )}
 
-        {['live', 'result', 'unsold'].includes(state.phase) && (
+        {state.phase === 'unsold' && (
+          <UnsoldPlayersPanel
+            players={unsoldPlayers}
+            title="Unsold Players Remaining"
+            hint="The auction is paused. Redo the unsold round or finish when you are ready."
+            actions={
+              <>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleRestartUnsold}
+                  disabled={unsoldActionBusy || unsoldPlayers.length === 0 || allSquadsFull}
+                >
+                  {unsoldActionBusy ? '…' : '🔁 Redo Unsold Round'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEndAuction}
+                  disabled={unsoldActionBusy}
+                >
+                  ✅ Finish Auction
+                </button>
+              </>
+            }
+          />
+        )}
+        {unsoldActionError && state.phase === 'unsold' && (
+          <p className="error">{unsoldActionError}</p>
+        )}
+
+        {['live', 'result'].includes(state.phase) && (
           <>
             <section className="card">
               <h3>Add Captain</h3>

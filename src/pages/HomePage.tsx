@@ -4,7 +4,7 @@ import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { createRoom, roomExists } from '../lib/auctionService';
 import { slugifyRoomName, isValidRoomSlug } from '../lib/roomUtils';
-import { setAdminId } from '../hooks/useSession';
+import { setAdminId, setSpectator } from '../hooks/useSession';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -57,6 +57,30 @@ export function HomePage() {
     }
   };
 
+  const handleSpectate = async () => {
+    if (!joinName.trim()) return;
+    const roomId = slugifyRoomName(joinName);
+    if (!isValidRoomSlug(roomId)) {
+      setError('Enter a valid room name (at least 3 characters).');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const exists = await roomExists(roomId);
+      if (!exists) {
+        setError(`Room "${roomId}" not found. Check the name with your admin.`);
+        return;
+      }
+      setSpectator(roomId);
+      navigate(`/room/${roomId}/spectate`);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Layout title="Football Auction" subtitle="Create or join a room">
       <FirebaseBanner />
@@ -96,7 +120,15 @@ export function HomePage() {
             />
             {joinSlug && <p className="muted">Room ID: {joinSlug}</p>}
             <button type="submit" disabled={loading || !joinName.trim()}>
-              {loading ? 'Joining...' : 'Join Room'}
+              {loading ? 'Joining...' : 'Join as Captain'}
+            </button>
+            <button
+              type="button"
+              className="btn-link spectator-join-btn"
+              disabled={loading || !joinName.trim()}
+              onClick={handleSpectate}
+            >
+              Watch as Spectator
             </button>
           </form>
         </div>

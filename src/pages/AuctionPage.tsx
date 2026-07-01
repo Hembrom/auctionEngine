@@ -7,20 +7,27 @@ import { MySquadPanel } from '../components/MySquadPanel';
 import { BidFeed } from '../components/BidFeed';
 import { BidPanel } from '../components/BidPanel';
 import { BidHero } from '../components/BidHero';
+import { UnsoldPlayersPanel } from '../components/UnsoldPlayersPanel';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine, useCountdown } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
-import { getCaptainId } from '../hooks/useSession';
-import { isAuctionPaused, canShowLiveAuction, canPlaceBids } from '../lib/auctionState';
-import { formatSoldMessage } from '../lib/auctionLogic';
-import { RESULT_SECONDS } from '../types';
+import { getCaptainId, isSpectator } from '../hooks/useSession';
+import { isAuctionPaused, canShowLiveAuction, canPlaceBids, getBidTimerSeconds, getResultTimerSeconds } from '../lib/auctionState';
+import { formatSoldMessage, getUnsoldPlayers } from '../lib/auctionLogic';
+import { SpectatorBanner } from '../components/SpectatorBanner';
+import { CaptainDashboard } from '../components/CaptainDashboard';
+import { pathForAuctionPhase } from '../lib/roomUtils';
 
 export function AuctionPage() {
   const roomId = useRoomId();
   const { state, captains, players, bids, loading } = useAuctionData(roomId);
   const navigate = useNavigate();
   const captainId = getCaptainId(roomId);
+  const spectating = isSpectator(roomId);
   const me = captains.find((c) => c.id === captainId);
+  const unsoldPlayers = getUnsoldPlayers(players);
+  const bidTimerSeconds = getBidTimerSeconds(state);
+  const resultTimerSeconds = getResultTimerSeconds(state);
 
   const currentPlayer = players.find((p) => p.id === state.currentPlayerId);
   const isPaused = isAuctionPaused(state);
@@ -64,31 +71,50 @@ export function AuctionPage() {
       : pendingSold || pendingUnsold
         ? resultCountdown > 0
           ? resultCountdown
-          : RESULT_SECONDS
+          : resultTimerSeconds
         : resultCountdown;
 
   useEffect(() => {
     if (loading) return;
     if (state.phase === 'lobby' || state.phase === 'waiting') {
-      navigate(captainId ? `/room/${roomId}/lobby` : `/room/${roomId}/admin`);
+      if (captainId || spectating) {
+        navigate(pathForAuctionPhase(roomId, state.phase));
+      } else {
+        navigate(`/room/${roomId}`);
+      }
+      return;
     }
     if (state.phase === 'ended') navigate(`/room/${roomId}/final`);
-  }, [loading, state.phase, navigate, captainId, roomId]);
+  }, [loading, state.phase, navigate, captainId, spectating, roomId]);
 
   return (
     <Layout
       title="Live Auction"
-      subtitle={state.isUnsoldRound ? 'Unsold Round' : state.displayName}
-      badge={isPaused ? 'PAUSED' : roomId}
+      subtitle={
+        state.phase === 'unsold'
+          ? 'Unsold players remaining'
+          : state.isUnsoldRound
+            ? 'Unsold Round'
+            : state.displayName
+      }
+      badge={spectating ? 'SPECTATOR' : isPaused ? 'PAUSED' : roomId}
       captainName={me ? `${me.name} (${me.teamName})` : undefined}
     >
+      {spectating && <SpectatorBanner />}
       {me && <CaptainIdentityBar captain={me} />}
 
       {isPaused && state.phase === 'live' && (
         <div className="pause-banner">Auction paused by admin</div>
       )}
 
-      {state.currentPlayerId && canShowLiveAuction(state) && (
+      {state.phase === 'unsold' && (
+        <UnsoldPlayersPanel
+          players={unsoldPlayers}
+          hint="Waiting for the admin to redo the unsold round or finish the auction."
+        />
+      )}
+
+      {state.currentPlayerId && canShowLiveAuction(state) && state.phase !== 'unsold' && (
         <div className="auction-stack">
           {currentPlayer ? (
             <PlayerCard player={currentPlayer} large />
@@ -102,6 +128,8 @@ export function AuctionPage() {
             highBidder={highBidder}
             bidCountdown={countdown}
             resultCountdown={heroResultCountdown}
+            bidTimerSeconds={bidTimerSeconds}
+            resultTimerSeconds={resultTimerSeconds}
             paused={isPaused}
             resultDisplay={heroResult}
           />
@@ -122,6 +150,8 @@ export function AuctionPage() {
       )}
 
       {me && <MySquadPanel captain={me} />}
+
+      {spectating && <CaptainDashboard captains={captains} />}
     </Layout>
   );
 }

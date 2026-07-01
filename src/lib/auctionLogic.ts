@@ -1,9 +1,11 @@
 import type { Captain, Player, Position } from '../types';
 import {
   POSITION_ORDER,
+  RESULT_SECONDS,
   SQUAD_SIZE,
   STARTING_BID,
   STARTING_BUDGET,
+  TIMER_SECONDS,
 } from '../types';
 
 export function hasGoalkeeper(captain: Captain): boolean {
@@ -102,6 +104,16 @@ export function formatRemainingSlots(captain: Captain): string {
   const outfield = getOutfieldSlotsRemaining(captain);
   if (outfield > 0) parts.push(`${outfield} outfield`);
   return parts.join(', ');
+}
+
+export function getUnsoldPlayers(players: Player[]): Player[] {
+  return players.filter((p) => p.status === 'unsold');
+}
+
+export function areAllSquadsFull(captains: Captain[]): boolean {
+  return captains
+    .filter((c) => c.status === 'approved')
+    .every((c) => c.squad.length >= SQUAD_SIZE);
 }
 
 export function shuffleArray<T>(arr: T[]): T[] {
@@ -225,5 +237,7 @@ export function createDefaultAuctionState(): import('../types').AuctionState {
     resultDisplay: null,
     resultEndsAt: null,
     adminId: null,
+    bidTimerSeconds: TIMER_SECONDS,
+    resultTimerSeconds: RESULT_SECONDS,
   };
 }
