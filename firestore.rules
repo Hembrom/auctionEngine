@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Internal company tool — open read/write for simplicity.
+    // Tighten rules before exposing publicly.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
