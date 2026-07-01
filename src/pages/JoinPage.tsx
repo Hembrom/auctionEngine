@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { useAuctionData } from '../hooks/useAuctionData';
@@ -55,7 +55,7 @@ export function JoinPage() {
           </button>
           {error && <p className="error">{error}</p>}
           <p className="muted join-alt-link">
-            Just watching? <a href={`/room/${roomId}/spectate`}>Enter as spectator</a>
+            Just watching? <Link to={`/room/${roomId}/spectate`}>Enter as spectator</Link>
           </p>
         </form>
       </div>

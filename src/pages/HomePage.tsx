@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
-import { createRoom, roomExists } from '../lib/auctionService';
-import { slugifyRoomName, isValidRoomSlug } from '../lib/roomUtils';
+import { createRoom, roomExists, getRoom } from '../lib/auctionService';
+import { slugifyRoomName, isValidRoomSlug, pathForAuctionPhase } from '../lib/roomUtils';
 import { setAdminId, setSpectator } from '../hooks/useSession';
 
 export function HomePage() {
@@ -72,8 +72,9 @@ export function HomePage() {
         setError(`Room "${roomId}" not found. Check the name with your admin.`);
         return;
       }
+      const room = await getRoom(roomId);
       setSpectator(roomId);
-      navigate(`/room/${roomId}/spectate`);
+      navigate(pathForAuctionPhase(roomId, room?.phase ?? 'waiting'));
     } catch (err) {
       setError((err as Error).message);
     } finally {

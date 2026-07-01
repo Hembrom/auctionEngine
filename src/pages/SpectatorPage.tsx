@@ -1,27 +1,22 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
-import { isSpectator, setSpectator } from '../hooks/useSession';
+import { setSpectator } from '../hooks/useSession';
 import { pathForAuctionPhase } from '../lib/roomUtils';
 
 export function SpectatorPage() {
   const roomId = useRoomId();
   const navigate = useNavigate();
   const { state, loading, firebaseError } = useAuctionData(roomId);
-  const watching = isSpectator(roomId);
 
   useEffect(() => {
-    if (loading || !watching) return;
-    navigate(pathForAuctionPhase(roomId, state.phase), { replace: true });
-  }, [loading, watching, state.phase, roomId, navigate]);
-
-  const handleWatch = () => {
+    if (loading || firebaseError) return;
     setSpectator(roomId);
-    navigate(pathForAuctionPhase(roomId, state.phase));
-  };
+    navigate(pathForAuctionPhase(roomId, state.phase), { replace: true });
+  }, [loading, firebaseError, state.phase, roomId, navigate]);
 
   return (
     <Layout
@@ -36,12 +31,9 @@ export function SpectatorPage() {
           Spectators can follow the live auction, see bids, and view final teams — but cannot bid
           or join as a captain.
         </p>
-        <button type="button" className="btn-primary btn-lg" onClick={handleWatch}>
-          Enter as Spectator
-        </button>
+        <p>Entering as spectator…</p>
         <p className="muted join-alt-link">
-          Want to bid?{' '}
-          <a href={`/room/${roomId}`}>Join as a captain</a>
+          Want to bid? <Link to={`/room/${roomId}`}>Join as a captain</Link>
         </p>
       </div>
     </Layout>

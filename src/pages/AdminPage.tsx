@@ -280,14 +280,18 @@ export function AdminPage() {
             </p>
           </div>
           {['waiting', 'lobby'].includes(state.phase) && (
-            <button type="button" onClick={handleSaveTimers} disabled={timerSaveBusy}>
-              {timerSaveBusy ? 'Saving…' : 'Save Timer Settings'}
-            </button>
+            <div className="config-actions">
+              <button type="button" onClick={handleSaveTimers} disabled={timerSaveBusy}>
+                {timerSaveBusy ? 'Saving…' : 'Save Timer Settings'}
+              </button>
+              {state.phase === 'waiting' && approved.length > 0 && (
+                <button type="button" onClick={() => moveToLobby(roomId, startingBudget)}>
+                  Open Lobby
+                </button>
+              )}
+            </div>
           )}
           {timerSaveError && <p className="error">{timerSaveError}</p>}
-          {state.phase === 'waiting' && approved.length > 0 && (
-            <button onClick={() => moveToLobby(roomId, startingBudget)}>Open Lobby</button>
-          )}
         </section>
 
         {(state.phase === 'waiting' || state.phase === 'lobby') && (

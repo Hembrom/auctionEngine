@@ -30,6 +30,8 @@ export function pathForAuctionPhase(roomId: string, phase: AuctionPhase): string
   if (phase === 'live' || phase === 'result' || phase === 'unsold') {
     return `/room/${roomId}/auction`;
   }
-  if (phase === 'lobby') return `/room/${roomId}/lobby`;
-  return `/room/${roomId}/spectate`;
+  if (phase === 'lobby' || phase === 'waiting' || phase === 'setup') {
+    return `/room/${roomId}/lobby`;
+  }
+  return `/room/${roomId}/lobby`;
 }
