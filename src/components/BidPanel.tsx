@@ -7,6 +7,8 @@ import {
 import { placeBid } from '../lib/auctionService';
 import { STARTING_BID } from '../types';
 
+const QUICK_BID_INCREMENTS = [1, 5, 10] as const;
+
 interface BidPanelProps {
   roomId: string;
   captain: Captain;
@@ -15,10 +17,16 @@ interface BidPanelProps {
   disabled: boolean;
 }
 
+function getQuickBidAmount(increment: number, currentHighBid: number): number {
+  const minBid = currentHighBid === 0 ? STARTING_BID : currentHighBid + 1;
+  if (increment === 1) return minBid;
+  const reference = currentHighBid === 0 ? STARTING_BID : currentHighBid;
+  return reference + increment;
+}
+
 export function BidPanel({ roomId, captain, player, currentHighBid, disabled }: BidPanelProps) {
-  const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingIncrement, setLoadingIncrement] = useState<number | null>(null);
 
   const minBid = currentHighBid === 0 ? STARTING_BID : currentHighBid + 1;
   const available = getAvailableBudget(captain);
@@ -28,15 +36,15 @@ export function BidPanel({ roomId, captain, player, currentHighBid, disabled }: 
     if (!disabled) setError('');
   }, [disabled]);
 
-  const handleBid = async () => {
-    const bidAmount = Number(amount);
+  const handleQuickBid = async (increment: number) => {
+    const bidAmount = getQuickBidAmount(increment, currentHighBid);
     const check = isEligibleToBid(captain, player, bidAmount, currentHighBid);
     if (!check.eligible) {
       setError(check.reason ?? 'Cannot bid');
       return;
     }
 
-    setLoading(true);
+    setLoadingIncrement(increment);
     setError('');
     const result = await placeBid(
       roomId,
@@ -45,17 +53,17 @@ export function BidPanel({ roomId, captain, player, currentHighBid, disabled }: 
       captain.teamName || captain.name,
       bidAmount,
     );
-    setLoading(false);
+    setLoadingIncrement(null);
     if (!result.success) {
       setError(result.error ?? 'Bid failed');
-    } else {
-      setAmount('');
     }
   };
 
   return (
     <div className="bid-panel">
-      <p className="muted bid-panel-min">Min bid: ₹{minBid}</p>
+      <p className="muted bid-panel-min">
+        Min bid: ₹{minBid} · Available: ₹{available}
+      </p>
 
       {!eligible && !disabled ? (
         <div className="bid-disabled">
@@ -66,18 +74,27 @@ export function BidPanel({ roomId, captain, player, currentHighBid, disabled }: 
           <p>Bidding paused — waiting for admin to resume</p>
         </div>
       ) : (
-        <div className="bid-form">
-          <input
-            type="number"
-            min={minBid}
-            max={available}
-            placeholder={`₹${minBid}+`}
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-          <button onClick={handleBid} disabled={loading || !amount}>
-            {loading ? 'Placing...' : 'Place Bid'}
-          </button>
+        <div className="bid-quick-buttons">
+          {QUICK_BID_INCREMENTS.map((increment) => {
+            const bidAmount = getQuickBidAmount(increment, currentHighBid);
+            const canBid = isEligibleToBid(captain, player, bidAmount, currentHighBid).eligible;
+            const isLoading = loadingIncrement === increment;
+
+            return (
+              <button
+                key={increment}
+                type="button"
+                className="bid-quick-btn"
+                onClick={() => handleQuickBid(increment)}
+                disabled={!canBid || loadingIncrement !== null}
+              >
+                <span className="bid-quick-label">+{increment}</span>
+                <span className="bid-quick-amount">
+                  {isLoading ? 'Placing...' : `₹${bidAmount}`}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
       {error && <p className="error">{error}</p>}

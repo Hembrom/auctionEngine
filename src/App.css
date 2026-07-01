@@ -664,6 +664,18 @@ button:disabled {
   color: #fbbf24;
 }
 
+.bid-hero-sold-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 0.25rem 0.5rem;
+}
+
+.bid-hero-sold-text {
+  font-size: 1.15rem;
+  line-height: 1.4;
+  color: #fbbf24;
+}
+
 .bid-hero-unsold-result {
   border-color: var(--muted);
   background: linear-gradient(135deg, rgba(148, 163, 184, 0.12), rgba(148, 163, 184, 0.04));
@@ -770,13 +782,33 @@ button:disabled {
   font-size: 0.9rem;
 }
 
-.bid-form {
-  display: flex;
-  gap: 0.5rem;
+.bid-quick-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
 }
 
-.bid-form input {
-  flex: 1;
+.bid-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 4.5rem;
+  padding: 0.85rem 0.5rem;
+  font-size: 1rem;
+}
+
+.bid-quick-label {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bid-quick-amount {
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0.95;
 }
 
 .bid-disabled {

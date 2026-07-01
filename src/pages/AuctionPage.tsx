@@ -12,6 +12,7 @@ import { useAuctionEngine, useCountdown } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
 import { getCaptainId } from '../hooks/useSession';
 import { isAuctionPaused, canShowLiveAuction, canPlaceBids } from '../lib/auctionState';
+import { formatSoldMessage } from '../lib/auctionLogic';
 import { RESULT_SECONDS } from '../types';
 
 export function AuctionPage() {
@@ -45,7 +46,11 @@ export function AuctionPage() {
     state.resultDisplay ??
     (pendingSold && state.currentBid && state.currentPlayerId
       ? {
-          message: '',
+          message: formatSoldMessage(
+            currentPlayer?.name ?? 'Player',
+            state.currentBid.captainName,
+            state.currentBid.amount,
+          ),
           playerId: state.currentPlayerId,
           captainId: state.currentBid.captainId,
           amount: state.currentBid.amount,

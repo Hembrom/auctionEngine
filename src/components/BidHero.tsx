@@ -24,6 +24,7 @@ export function BidHero({
   const isResult = phase === 'result';
   const isSold = isResult && !!resultDisplay?.captainId;
   const isUnsoldResult = isResult && resultDisplay && !resultDisplay.captainId;
+  const soldMessage = isSold ? resultDisplay?.message : null;
   const displayBid = currentBidAmount || STARTING_BID;
   const hasBid = currentBidAmount > 0;
   const timerSeconds = isResult ? resultCountdown : bidCountdown;
@@ -38,6 +39,11 @@ export function BidHero({
         <div className="bid-hero-stat bid-hero-center">
           <span className="bid-hero-label">Result</span>
           <span className="bid-hero-amount bid-hero-unsold">Unsold</span>
+        </div>
+      ) : isSold && soldMessage ? (
+        <div className="bid-hero-stat bid-hero-center bid-hero-sold-message">
+          <span className="bid-hero-label">Result</span>
+          <span className="bid-hero-amount bid-hero-sold-text">{soldMessage}</span>
         </div>
       ) : (
         <>

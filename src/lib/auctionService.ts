@@ -32,6 +32,7 @@ import {
   assignPosition,
   buildPlayerQueue,
   createDefaultAuctionState,
+  formatSoldMessage,
   isAuctionComplete,
 } from './auctionLogic';
 import { isValidRoomSlug, slugifyRoomName } from './roomUtils';
@@ -333,7 +334,11 @@ export async function finalizeCurrentPlayer(
         phase: 'result',
         currentIndex: nextIndex,
         resultDisplay: {
-          message: `Sold to ${captain.teamName || captainName} for ₹${amount}`,
+          message: formatSoldMessage(
+            player.name,
+            captain.teamName || captainName,
+            amount,
+          ),
           playerId,
           captainId,
           amount,

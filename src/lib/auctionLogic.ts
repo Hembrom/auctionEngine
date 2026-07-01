@@ -43,6 +43,10 @@ export function canBidOnPosition(captain: Captain, position: Position): boolean 
   return getOutfieldSlotsRemaining(captain) > 0;
 }
 
+export function formatSoldMessage(playerName: string, teamName: string, amount: number): string {
+  return `Player ${playerName} sold to ${teamName} in amount Rs ${amount}`;
+}
+
 export function isEligibleToBid(
   captain: Captain,
   player: Player,
