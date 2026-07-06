@@ -1353,6 +1353,41 @@ button:disabled {
   padding: 0.5rem 0;
 }
 
+.players-left-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.players-left-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.players-left-list li:last-child {
+  border-bottom: none;
+}
+
+.players-left-name {
+  font-weight: 500;
+}
+
+.players-left-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 0.15rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
 /* Final Teams */
 .teams-grid {
   display: grid;

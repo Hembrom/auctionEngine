@@ -29,7 +29,10 @@ export function LobbyPage() {
       return;
     }
     if (me?.status === 'pending') navigate(`/room/${roomId}/waiting`);
-    if (['live', 'result', 'unsold'].includes(state.phase)) navigate(`/room/${roomId}/auction`);
+    if (['live', 'result', 'unsold'].includes(state.phase)) {
+      navigate(spectating ? `/room/${roomId}/spectate` : `/room/${roomId}/auction`);
+      return;
+    }
     if (state.phase === 'ended') navigate(`/room/${roomId}/final`);
   }, [loading, state.phase, me, captainId, spectating, navigate, roomId]);
 

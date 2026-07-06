@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
-import { AuctionDashboardSections } from '../components/AuctionDashboardSections';
+import { SpectatorDashboardSections } from '../components/SpectatorDashboardSections';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
@@ -45,13 +45,12 @@ export function SpectatorPage() {
             Want to bid? <Link to={`/room/${roomId}`}>Join as a captain</Link>
           </p>
 
-          <AuctionDashboardSections
+          <SpectatorDashboardSections
             roomId={roomId}
             state={state}
             players={players}
             bids={bids}
             captains={captains}
-            showSpectatorBanner
           />
         </>
       )}

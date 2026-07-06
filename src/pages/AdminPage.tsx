@@ -265,6 +265,7 @@ export function AdminPage() {
         players={players}
         bids={bids}
         captains={captains}
+        showPlayerPipeline
         adminLiveControls={adminLiveControls}
         playerManagement={
           <AdminPlayerManagement
