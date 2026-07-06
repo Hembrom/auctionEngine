@@ -35,17 +35,25 @@ export function BidPanel({
 }: BidPanelProps) {
   const [error, setError] = useState('');
   const [loadingIncrement, setLoadingIncrement] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState('');
+  const [customLoading, setCustomLoading] = useState(false);
   const [optOutBusy, setOptOutBusy] = useState(false);
 
   const minBid = currentHighBid === 0 ? STARTING_BID : currentHighBid + 1;
-  const available = getAvailableBudget(captain);
+  const maxBid = getAvailableBudget(captain);
   const isHighBidder = currentBidderId === captain.id;
   const hasOptedOut = optedOutCaptainIds.includes(captain.id);
   const { eligible, reason } = isEligibleToBid(captain, player, minBid, currentHighBid);
+  const biddingBusy = loadingIncrement !== null || customLoading;
 
   useEffect(() => {
     if (!disabled) setError('');
   }, [disabled, currentHighBid, currentBidderId]);
+
+  useEffect(() => {
+    setCustomAmount('');
+    setError('');
+  }, [player.id, currentHighBid, currentBidderId]);
 
   const handleQuickBid = async (increment: number) => {
     const bidAmount = getQuickBidAmount(increment, currentHighBid);
@@ -70,6 +78,44 @@ export function BidPanel({
     }
   };
 
+  const handleCustomBid = async () => {
+    const amount = Number(customAmount);
+    if (!Number.isInteger(amount) || amount <= 0) {
+      setError('Enter a valid whole-number bid');
+      return;
+    }
+
+    const check = isEligibleToBid(captain, player, amount, currentHighBid);
+    if (!check.eligible) {
+      setError(check.reason ?? 'Cannot bid');
+      return;
+    }
+
+    setCustomLoading(true);
+    setError('');
+    const result = await placeBid(
+      roomId,
+      player.id,
+      captain.id,
+      captain.teamName || captain.name,
+      amount,
+    );
+    setCustomLoading(false);
+    if (!result.success) {
+      setError(result.error ?? 'Bid failed');
+    } else {
+      setCustomAmount('');
+    }
+  };
+
+  const parsedCustomAmount = customAmount === '' ? null : Number(customAmount);
+  const customPreview =
+    parsedCustomAmount !== null && Number.isInteger(parsedCustomAmount)
+      ? isEligibleToBid(captain, player, parsedCustomAmount, currentHighBid)
+      : null;
+  const canSubmitCustom =
+    customPreview?.eligible === true && !biddingBusy && !optOutBusy;
+
   const handleOptOut = async () => {
     setOptOutBusy(true);
     setError('');
@@ -85,7 +131,7 @@ export function BidPanel({
   return (
     <div className="bid-panel">
       <p className="muted bid-panel-min">
-        Min bid: ₹{minBid} · Available: ₹{available}
+        Min bid: ₹{minBid} · Max bid: ₹{maxBid}
       </p>
 
       {hasOptedOut ? (
@@ -126,7 +172,7 @@ export function BidPanel({
                   type="button"
                   className="bid-quick-btn"
                   onClick={() => handleQuickBid(increment)}
-                  disabled={!canBid || loadingIncrement !== null || optOutBusy}
+                  disabled={!canBid || biddingBusy || optOutBusy}
                 >
                   <span className="bid-quick-label">+{increment}</span>
                   <span className="bid-quick-amount">
@@ -136,11 +182,44 @@ export function BidPanel({
               );
             })}
           </div>
+
+          <div className="bid-custom-row">
+            <input
+              type="number"
+              className="bid-custom-input"
+              min={minBid}
+              max={maxBid}
+              step={1}
+              inputMode="numeric"
+              placeholder={`Custom amount (₹${minBid}–₹${maxBid})`}
+              value={customAmount}
+              onChange={(e) => {
+                setCustomAmount(e.target.value);
+                setError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && canSubmitCustom) handleCustomBid();
+              }}
+              disabled={biddingBusy || optOutBusy}
+            />
+            <button
+              type="button"
+              className="bid-custom-submit"
+              onClick={handleCustomBid}
+              disabled={!canSubmitCustom}
+            >
+              {customLoading ? 'Placing…' : 'Bid'}
+            </button>
+          </div>
+          {customAmount !== '' && customPreview && !customPreview.eligible && (
+            <p className="error bid-custom-hint">{customPreview.reason}</p>
+          )}
+
           <button
             type="button"
             className="btn-opt-out"
             onClick={handleOptOut}
-            disabled={optOutBusy || loadingIncrement !== null}
+            disabled={optOutBusy || biddingBusy}
           >
             {optOutBusy ? 'Opting out…' : 'Opt Out of This Player'}
           </button>
