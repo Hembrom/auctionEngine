@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { AuctionState, Captain, Player } from '../types';
 import { finalizeCurrentPlayer, advanceAfterResult } from '../lib/auctionService';
 import { isAuctionPaused } from '../lib/auctionState';
+import { shouldSellOnOptOut } from '../lib/auctionLogic';
 
 export function useAuctionEngine(
   roomId: string,
@@ -27,6 +28,38 @@ export function useAuctionEngine(
       if (isAuctionPaused(current)) return;
 
       const now = Date.now();
+
+      if (
+        current.phase === 'live' &&
+        current.currentBid &&
+        current.currentPlayerId &&
+        !isAuctionPaused(current)
+      ) {
+        const player = playersRef.current.find((p) => p.id === current.currentPlayerId);
+        if (
+          player &&
+          shouldSellOnOptOut(
+            captainsRef.current,
+            player,
+            current.currentBid,
+            current.optedOutCaptainIds,
+          )
+        ) {
+          processing.current = true;
+          try {
+            await finalizeCurrentPlayer(
+              roomId,
+              playersRef.current,
+              captainsRef.current,
+              current,
+              true,
+            );
+          } finally {
+            processing.current = false;
+          }
+          return;
+        }
+      }
 
       if (current.phase === 'live' && current.bidDeadline && now >= current.bidDeadline) {
         processing.current = true;

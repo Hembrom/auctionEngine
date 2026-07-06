@@ -33,6 +33,8 @@ import {
   createDefaultAuctionState,
   formatSoldMessage,
   isAuctionComplete,
+  normalizeCaptainLabel,
+  shouldSellOnOptOut,
 } from './auctionLogic';
 import { isValidRoomSlug, slugifyRoomName } from './roomUtils';
 import { getBidTimerSeconds, getResultTimerSeconds, isAuctionPaused } from './auctionState';
@@ -153,13 +155,37 @@ export function subscribeBids(
   );
 }
 
-export async function requestJoin(roomId: string, name: string): Promise<string> {
+export async function requestJoin(
+  roomId: string,
+  name: string,
+  teamName: string,
+): Promise<string> {
   const exists = await roomExists(roomId);
   if (!exists) throw new Error('Room not found.');
 
+  const trimmedName = name.trim();
+  const trimmedTeam = teamName.trim();
+  if (!trimmedName) throw new Error('Captain name is required.');
+  if (!trimmedTeam) throw new Error('Team name is required.');
+
+  const captainsSnap = await getDocs(roomPaths(roomId).captains);
+  const normName = normalizeCaptainLabel(trimmedName);
+  const normTeam = normalizeCaptainLabel(trimmedTeam);
+
+  for (const docSnap of captainsSnap.docs) {
+    const c = docSnap.data() as Captain;
+    if (c.status === 'rejected') continue;
+    if (normalizeCaptainLabel(c.name) === normName) {
+      throw new Error('Captain name is already taken in this room.');
+    }
+    if (normalizeCaptainLabel(c.teamName) === normTeam) {
+      throw new Error('Team name is already taken in this room.');
+    }
+  }
+
   const ref = await addDoc(roomPaths(roomId).captains, {
-    name,
-    teamName: name,
+    name: trimmedName,
+    teamName: trimmedTeam,
     status: 'pending',
     budget: STARTING_BUDGET,
     squad: [],
@@ -185,9 +211,21 @@ export async function setTeamName(
   teamName: string,
   fallbackName: string,
 ) {
-  const trimmed = teamName.trim();
+  const trimmed = teamName.trim() || fallbackName;
+  const normTeam = normalizeCaptainLabel(trimmed);
+
+  const captainsSnap = await getDocs(roomPaths(roomId).captains);
+  for (const docSnap of captainsSnap.docs) {
+    if (docSnap.id === captainId) continue;
+    const c = docSnap.data() as Captain;
+    if (c.status === 'rejected') continue;
+    if (normalizeCaptainLabel(c.teamName) === normTeam) {
+      throw new Error('Team name is already taken in this room.');
+    }
+  }
+
   await updateDoc(doc(roomPaths(roomId).captains, captainId), {
-    teamName: trimmed || fallbackName,
+    teamName: trimmed,
   });
 }
 
@@ -249,6 +287,7 @@ export async function startAuction(roomId: string, players: Player[]) {
     resultDisplay: null,
     resultEndsAt: null,
     paused: false,
+    optedOutCaptainIds: [],
   });
 }
 
@@ -272,10 +311,14 @@ export async function placeBid(
       const existingBid = state.currentBid?.amount ?? 0;
       const minBid = existingBid === 0 ? STARTING_BID : existingBid + 1;
       if (amount < minBid) throw new Error(`Minimum bid is ₹${minBid}`);
+      if (state.currentBid?.captainId === captainId) {
+        throw new Error('You are the highest bidder. Wait for a counter bid.');
+      }
 
       transaction.update(paths.room, {
         currentBid: { amount, captainId, captainName },
         bidDeadline: Date.now() + getBidTimerSeconds(state) * 1000,
+        optedOutCaptainIds: [],
       });
     });
 
@@ -293,11 +336,51 @@ export async function placeBid(
   }
 }
 
+export async function optOutOfBid(roomId: string, captainId: string): Promise<void> {
+  const paths = roomPaths(roomId);
+  let optedAfter: string[] = [];
+
+  await runTransaction(db, async (tx) => {
+    const roomSnap = await tx.get(paths.room);
+    if (!roomSnap.exists()) throw new Error('Room not found');
+
+    const data = roomSnap.data() as AuctionState;
+    if (data.phase !== 'live' || isAuctionPaused(data)) throw new Error('Bidding is closed');
+    if (data.currentBid?.captainId === captainId) {
+      throw new Error('Highest bidder cannot opt out.');
+    }
+
+    optedAfter = [...(data.optedOutCaptainIds ?? [])];
+    if (!optedAfter.includes(captainId)) optedAfter.push(captainId);
+
+    tx.update(paths.room, { optedOutCaptainIds: optedAfter });
+  });
+
+  const room = await getRoom(roomId);
+  if (!room?.currentBid?.captainId) return;
+
+  const captainsSnap = await getDocs(paths.captains);
+  const captains = captainsSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as Captain);
+
+  let player: Player | null = null;
+  if (room.currentPlayerId) {
+    const playerSnap = await getDoc(doc(paths.players, room.currentPlayerId));
+    if (playerSnap.exists()) {
+      player = { id: playerSnap.id, ...playerSnap.data() } as Player;
+    }
+  }
+
+  if (shouldSellOnOptOut(captains, player, room.currentBid, optedAfter)) {
+    await finalizeCurrentPlayer(roomId, [], [], room, true);
+  }
+}
+
 export async function finalizeCurrentPlayer(
   roomId: string,
   _players: Player[],
   _captains: Captain[],
   _state: AuctionState,
+  force = false,
 ): Promise<void> {
   const paths = roomPaths(roomId);
 
@@ -307,7 +390,8 @@ export async function finalizeCurrentPlayer(
 
     const data = roomSnap.data() as AuctionState;
     if (data.phase !== 'live') return;
-    if (!data.bidDeadline || Date.now() < data.bidDeadline) return;
+    if (!force && (!data.bidDeadline || Date.now() < data.bidDeadline)) return;
+    if (force && !data.currentBid) return;
     if (!data.currentPlayerId) return;
 
     const playerId = data.currentPlayerId;
@@ -357,6 +441,7 @@ export async function finalizeCurrentPlayer(
         },
         resultEndsAt: Date.now() + getResultTimerSeconds(data) * 1000,
         bidDeadline: null,
+        optedOutCaptainIds: [],
       });
       return;
     }
@@ -368,6 +453,7 @@ export async function finalizeCurrentPlayer(
       resultEndsAt: Date.now() + getResultTimerSeconds(data) * 1000,
       bidDeadline: null,
       currentIndex: nextIndex,
+      optedOutCaptainIds: [],
     });
   });
 }
@@ -406,6 +492,7 @@ export async function advanceAfterResult(
             bidDeadline: Date.now() + getBidTimerSeconds(data) * 1000,
             resultDisplay: null,
             resultEndsAt: null,
+            optedOutCaptainIds: [],
           });
           return;
         }
@@ -444,6 +531,7 @@ export async function advanceAfterResult(
       bidDeadline: Date.now() + getBidTimerSeconds(data) * 1000,
       resultDisplay: null,
       resultEndsAt: null,
+      optedOutCaptainIds: [],
     });
   });
 }
@@ -538,6 +626,7 @@ export async function restartUnsoldRound(roomId: string, players: Player[]): Pro
     resultEndsAt: null,
     paused: false,
     pausedRemainingMs: null,
+    optedOutCaptainIds: [],
   });
 }
 

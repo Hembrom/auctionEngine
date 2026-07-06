@@ -45,9 +45,6 @@ export function ShareRoomLinks({ roomId }: { roomId: string }) {
         description="Send this link — watch-only, no bidding."
         url={roomSpectatorUrl(roomId)}
       />
-      <p className="muted share-room-id">
-        Room ID: <strong>{roomId}</strong>
-      </p>
     </>
   );
 }

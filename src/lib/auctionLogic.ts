@@ -1,4 +1,5 @@
-import type { Captain, Player, Position } from '../types';
+import type { Captain, CurrentBid, Player, Position } from '../types';
+import type { AuctionState } from '../types';
 import {
   POSITION_ORDER,
   RESULT_SECONDS,
@@ -114,6 +115,65 @@ export function areAllSquadsFull(captains: Captain[]): boolean {
   return captains
     .filter((c) => c.status === 'approved')
     .every((c) => c.squad.length >= SQUAD_SIZE);
+}
+
+export function normalizeCaptainLabel(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function getOtherApprovedCaptainIds(
+  captains: Captain[],
+  currentBidderId?: string,
+): string[] {
+  return captains
+    .filter((c) => c.status === 'approved')
+    .filter((c) => c.id !== currentBidderId)
+    .map((c) => c.id);
+}
+
+export function isCaptainOutOfBidding(
+  captain: Captain,
+  player: Player,
+  currentHighBid: number,
+  optedOutCaptainIds: string[],
+): boolean {
+  if (optedOutCaptainIds.includes(captain.id)) return true;
+  const minBid = currentHighBid === 0 ? STARTING_BID : currentHighBid + 1;
+  return !isEligibleToBid(captain, player, minBid, currentHighBid).eligible;
+}
+
+export function shouldSellOnOptOut(
+  captains: Captain[],
+  player: Player | null | undefined,
+  currentBid: CurrentBid | null | undefined,
+  optedOutCaptainIds: string[] = [],
+): boolean {
+  if (!currentBid?.captainId || !player) return false;
+
+  const others = getOtherApprovedCaptainIds(captains, currentBid.captainId);
+  if (others.length === 0) return true;
+
+  return others.every((id) => {
+    const captain = captains.find((c) => c.id === id);
+    if (!captain) return true;
+    return isCaptainOutOfBidding(captain, player, currentBid.amount, optedOutCaptainIds);
+  });
+}
+
+export function getPlayerBoardSections(state: AuctionState, players: Player[]) {
+  const playerMap = new Map(players.map((p) => [p.id, p]));
+  const queue = state.isUnsoldRound ? state.unsoldQueue : state.playerQueue;
+  const upcomingIds = queue.slice(state.currentIndex).filter((id) => id !== state.currentPlayerId);
+
+  return {
+    current: state.currentPlayerId ? (playerMap.get(state.currentPlayerId) ?? null) : null,
+    upcoming: upcomingIds
+      .map((id) => playerMap.get(id))
+      .filter((p): p is Player => !!p),
+    sold: players.filter((p) => p.status === 'sold'),
+    unsold: players.filter((p) => p.status === 'unsold'),
+    remaining: players.filter((p) => p.status === 'available'),
+  };
 }
 
 export function shuffleArray<T>(arr: T[]): T[] {

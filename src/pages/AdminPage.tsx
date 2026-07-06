@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
-import { PlayerCard } from '../components/PlayerCard';
-import { CaptainDashboard } from '../components/CaptainDashboard';
-import { BidFeed } from '../components/BidFeed';
+import { CollapsibleSection } from '../components/CollapsibleSection';
+import { AuctionDashboardSections } from '../components/AuctionDashboardSections';
+import { AdminPlayerManagement } from '../components/AdminPlayerManagement';
 import { ShareRoomLinks } from '../components/ShareRoomLinks';
-import { UnsoldPlayersPanel } from '../components/UnsoldPlayersPanel';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine, useCountdown } from '../hooks/useAuctionEngine';
@@ -24,9 +23,6 @@ import {
   getRoom,
   skipPlayer,
   markUnsold,
-  movePlayer,
-  adjustBudget,
-  addCaptainMidAuction,
   resetRoom,
   restartUnsoldRound,
   endAuction,
@@ -41,7 +37,7 @@ const ALL_POSITIONS: Position[] = ['GK', 'DEF', 'MID', 'ST'];
 
 export function AdminPage() {
   const roomId = useRoomId();
-  const { state, captains, players, loading, firebaseError } = useAuctionData(roomId);
+  const { state, captains, players, bids, loading, firebaseError } = useAuctionData(roomId);
   const navigate = useNavigate();
   const [startingBudget, setStartingBudget] = useState(STARTING_BUDGET);
   const [bidTimerSeconds, setBidTimerSeconds] = useState(TIMER_SECONDS);
@@ -78,6 +74,8 @@ export function AdminPage() {
   const currentPlayer = players.find((p) => p.id === state.currentPlayerId);
   const isPaused = isAuctionPaused(state);
   const countdown = useCountdown(state.bidDeadline, isPaused, state.pausedRemainingMs);
+  const isLivePhase = ['live', 'result', 'unsold'].includes(state.phase);
+  const isSetupPhase = ['waiting', 'lobby', 'setup'].includes(state.phase);
 
   useAuctionEngine(roomId, state, players, captains);
 
@@ -183,6 +181,51 @@ export function AdminPage() {
     setForm({ ...form, positions: next.length ? next : ['MID'] });
   };
 
+  const adminLiveControls = isLivePhase ? (
+    <div className="admin-live-controls card">
+      {['live', 'result'].includes(state.phase) && (
+        <>
+          <div className="admin-controls">
+            <button type="button" onClick={handlePauseToggle} disabled={pauseBusy}>
+              {pauseBusy ? '…' : isPaused ? '▶️ Resume' : '⏸️ Pause'}
+            </button>
+            <button type="button" onClick={() => skipPlayer(roomId, state)}>
+              ⏭️ Skip Player
+            </button>
+            <button type="button" onClick={() => markUnsold(roomId, state)}>
+              ❌ Mark Unsold
+            </button>
+          </div>
+          {pauseError && <p className="error">{pauseError}</p>}
+          {currentPlayer && (
+            <p className="muted admin-live-meta">
+              Current: <strong>{currentPlayer.name}</strong> · Timer: {countdown}s · Bid: ₹
+              {state.currentBid?.amount ?? 10}
+            </p>
+          )}
+        </>
+      )}
+      {state.phase === 'unsold' && (
+        <>
+          <div className="admin-controls">
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleRestartUnsold}
+              disabled={unsoldActionBusy || unsoldPlayers.length === 0 || allSquadsFull}
+            >
+              {unsoldActionBusy ? '…' : '🔁 Redo Unsold Round'}
+            </button>
+            <button type="button" onClick={handleEndAuction} disabled={unsoldActionBusy}>
+              ✅ Finish Auction
+            </button>
+          </div>
+          {unsoldActionError && <p className="error">{unsoldActionError}</p>}
+        </>
+      )}
+    </div>
+  ) : null;
+
   if (!isOwner) {
     return (
       <Layout title="Admin Access Denied" badge={roomId}>
@@ -216,408 +259,228 @@ export function AdminPage() {
 
       <ShareRoomLinks roomId={roomId} />
 
-      <div className="admin-grid">
-        <section className="card">
-          <h3>Waiting Room</h3>
-          {pending.length === 0 ? (
-            <p className="muted">No pending captains</p>
-          ) : (
-            <ul className="action-list">
-              {pending.map((c) => (
-                <li key={c.id}>
-                  <span>{c.name}</span>
-                  <div className="btn-group">
-                    <button
-                      className="btn-success"
-                      onClick={() => approveCaptain(roomId, c.id, startingBudget)}
-                    >
-                      Approve
-                    </button>
-                    <button className="btn-danger" onClick={() => rejectCaptain(roomId, c.id)}>
-                      Reject
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      <AuctionDashboardSections
+        roomId={roomId}
+        state={state}
+        players={players}
+        bids={bids}
+        captains={captains}
+        adminLiveControls={adminLiveControls}
+        playerManagement={
+          <AdminPlayerManagement
+            roomId={roomId}
+            captains={captains}
+            startingBudget={state.startingBudget || startingBudget}
+            newCaptainName={newCaptainName}
+            onNewCaptainNameChange={setNewCaptainName}
+            budgetCaptain={budgetCaptain}
+            onBudgetCaptainChange={setBudgetCaptain}
+            budgetAmount={budgetAmount}
+            onBudgetAmountChange={setBudgetAmount}
+            moveFrom={moveFrom}
+            onMoveFromChange={setMoveFrom}
+            moveTo={moveTo}
+            onMoveToChange={setMoveTo}
+            movePlayerId={movePlayerId}
+            onMovePlayerIdChange={setMovePlayerId}
+            onCaptainAdded={() => setNewCaptainName('')}
+            onBudgetUpdated={() => setBudgetAmount('')}
+            onPlayerMoved={() => setMovePlayerId('')}
+          />
+        }
+      />
 
-        <section className="card">
-          <h3>Configuration</h3>
-          <div className="form-row">
-            <label>Starting Budget (₹)</label>
-            <input
-              type="number"
-              value={startingBudget}
-              onChange={(e) => setStartingBudget(Number(e.target.value))}
-            />
-          </div>
-          <div className="form-row">
-            <label>Bid time per player (seconds)</label>
-            <input
-              type="number"
-              min={5}
-              value={bidTimerSeconds}
-              disabled={!['waiting', 'lobby'].includes(state.phase)}
-              onChange={(e) => setBidTimerSeconds(Number(e.target.value))}
-            />
-            <p className="muted config-hint">
-              How long captains have to bid. Default: {TIMER_SECONDS}s
-            </p>
-          </div>
-          <div className="form-row">
-            <label>Result display time (seconds)</label>
-            <input
-              type="number"
-              min={3}
-              value={resultTimerSeconds}
-              disabled={!['waiting', 'lobby'].includes(state.phase)}
-              onChange={(e) => setResultTimerSeconds(Number(e.target.value))}
-            />
-            <p className="muted config-hint">
-              How long sold/unsold info is shown before the next player. Default: {RESULT_SECONDS}s
-            </p>
-          </div>
-          {['waiting', 'lobby'].includes(state.phase) && (
-            <div className="config-actions">
-              <button type="button" onClick={handleSaveTimers} disabled={timerSaveBusy}>
-                {timerSaveBusy ? 'Saving…' : 'Save Timer Settings'}
-              </button>
-              {state.phase === 'waiting' && approved.length > 0 && (
-                <button type="button" onClick={() => moveToLobby(roomId, startingBudget)}>
-                  Open Lobby
-                </button>
-              )}
-            </div>
-          )}
-          {timerSaveError && <p className="error">{timerSaveError}</p>}
-        </section>
-
-        {(state.phase === 'waiting' || state.phase === 'lobby') && (
-          <section className="card admin-wide">
-            <h3>Player Setup ({players.length} players)</h3>
-            <div className="grid-2">
-              <div>
-                <h4>Upload CSV</h4>
-                <p className="muted">
-                  Columns: Name, Position, Last Match Rating, Fitness, Leadership, Team Influence
-                </p>
-                <input type="file" accept=".csv" onChange={handleCsvUpload} />
-                {csvError && <p className="error">{csvError}</p>}
-              </div>
-              <div>
-                <h4>Add Manually</h4>
-                <input
-                  placeholder="Player name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
-                <div className="position-picker">
-                  {ALL_POSITIONS.map((pos) => (
-                    <button
-                      key={pos}
-                      type="button"
-                      className={form.positions.includes(pos) ? 'active' : ''}
-                      onClick={() => togglePosition(pos)}
-                    >
-                      {pos}
-                    </button>
-                  ))}
-                </div>
-                <div className="ratings-input">
-                  {(['lastMatchRating', 'fitness', 'leadership', 'teamInfluence'] as const).map(
-                    (field) => (
-                      <label key={field}>
-                        {field.replace(/([A-Z])/g, ' $1')}
-                        <input
-                          type="number"
-                          min={1}
-                          max={5}
-                          value={form[field]}
-                          onChange={(e) => setForm({ ...form, [field]: Number(e.target.value) })}
-                        />
-                      </label>
-                    ),
-                  )}
-                </div>
-                <button onClick={handleAddPlayer}>Add Player</button>
-              </div>
-            </div>
-            {players.length > 0 && (
-              <ul className="player-list">
-                {players.map((p) => (
-                  <li key={p.id}>
-                    {p.name} ({p.positions.join('/')})
-                    <button
-                      className="btn-small btn-danger"
-                      onClick={() => deletePlayer(roomId, p.id)}
-                    >
-                      ×
-                    </button>
+      <CollapsibleSection title="Room Setup" defaultOpen={isSetupPhase}>
+        <div className="admin-grid">
+          <section className="card">
+            <h3>Waiting Room</h3>
+            {pending.length === 0 ? (
+              <p className="muted">No pending captains</p>
+            ) : (
+              <ul className="action-list">
+                {pending.map((c) => (
+                  <li key={c.id}>
+                    <span>
+                      {c.name} · <strong>{c.teamName}</strong>
+                    </span>
+                    <div className="btn-group">
+                      <button
+                        className="btn-success"
+                        onClick={() => approveCaptain(roomId, c.id, startingBudget)}
+                      >
+                        Approve
+                      </button>
+                      <button className="btn-danger" onClick={() => rejectCaptain(roomId, c.id)}>
+                        Reject
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </section>
-        )}
 
-        {state.phase === 'lobby' && (
-          <section className="card admin-wide">
-            <h3>Lobby — {approved.length} Captains Ready</h3>
-            <ul className="captain-list">
-              {approved.map((c) => (
-                <li key={c.id}>
-                  <strong>{c.teamName}</strong> ({c.name}) — ₹{c.budget}
-                </li>
-              ))}
-            </ul>
-            <button
-              className="btn-primary btn-lg"
-              disabled={players.length === 0 || approved.length === 0}
-              onClick={() => startAuction(roomId, players)}
-            >
-              Start Auction
-            </button>
-            {players.length === 0 && <p className="error">Add players before starting</p>}
-          </section>
-        )}
-
-        {state.phase === 'unsold' && (
-          <UnsoldPlayersPanel
-            players={unsoldPlayers}
-            title="Unsold Players Remaining"
-            hint="The auction is paused. Redo the unsold round or finish when you are ready."
-            actions={
-              <>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleRestartUnsold}
-                  disabled={unsoldActionBusy || unsoldPlayers.length === 0 || allSquadsFull}
-                >
-                  {unsoldActionBusy ? '…' : '🔁 Redo Unsold Round'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleEndAuction}
-                  disabled={unsoldActionBusy}
-                >
-                  ✅ Finish Auction
-                </button>
-              </>
-            }
-          />
-        )}
-        {unsoldActionError && state.phase === 'unsold' && (
-          <p className="error">{unsoldActionError}</p>
-        )}
-
-        {['live', 'result'].includes(state.phase) && (
-          <section className="card admin-wide">
-            <h3>Live Controls</h3>
-            <div className="admin-controls">
-              <button type="button" onClick={handlePauseToggle} disabled={pauseBusy}>
-                {pauseBusy ? '…' : isPaused ? '▶️ Resume' : '⏸️ Pause'}
-              </button>
-              <button onClick={() => skipPlayer(roomId, state)}>⏭️ Skip Player</button>
-              <button onClick={() => markUnsold(roomId, state)}>❌ Mark Unsold</button>
-              <a href={`/room/${roomId}/admin/auction`} className="btn-link">
-                👁️ View Live Auction
-              </a>
-            </div>
-            {pauseError && <p className="error">{pauseError}</p>}
-            {currentPlayer && (
-              <p>
-                Current: <strong>{currentPlayer.name}</strong> · Timer: {countdown}s · Bid: ₹
-                {state.currentBid?.amount ?? 10}
-              </p>
-            )}
-          </section>
-        )}
-
-        {state.phase === 'unsold' && (
-          <UnsoldPlayersPanel
-            players={unsoldPlayers}
-            title="Unsold Players Remaining"
-            hint="The auction is paused. Redo the unsold round or finish when you are ready."
-            actions={
-              <>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleRestartUnsold}
-                  disabled={unsoldActionBusy || unsoldPlayers.length === 0 || allSquadsFull}
-                >
-                  {unsoldActionBusy ? '…' : '🔁 Redo Unsold Round'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleEndAuction}
-                  disabled={unsoldActionBusy}
-                >
-                  ✅ Finish Auction
-                </button>
-              </>
-            }
-          />
-        )}
-        {unsoldActionError && state.phase === 'unsold' && (
-          <p className="error">{unsoldActionError}</p>
-        )}
-
-        {['live', 'result'].includes(state.phase) && (
-          <>
-            <section className="card">
-              <h3>Add Captain</h3>
-              <div className="form-row">
-                <input
-                  placeholder="Captain name"
-                  value={newCaptainName}
-                  onChange={(e) => setNewCaptainName(e.target.value)}
-                />
-                <button
-                  onClick={async () => {
-                    if (!newCaptainName.trim()) return;
-                    await addCaptainMidAuction(roomId, newCaptainName.trim(), state.startingBudget);
-                    setNewCaptainName('');
-                  }}
-                >
-                  Add
-                </button>
-              </div>
-            </section>
-
-            <section className="card">
-              <h3>Adjust Budget</h3>
-              <select value={budgetCaptain} onChange={(e) => setBudgetCaptain(e.target.value)}>
-                <option value="">Select captain</option>
-                {approved.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.teamName}
-                  </option>
-                ))}
-              </select>
+          <section className="card">
+            <h3>Configuration</h3>
+            <div className="form-row">
+              <label>Starting Budget (₹)</label>
               <input
                 type="number"
-                placeholder="New budget"
-                value={budgetAmount}
-                onChange={(e) => setBudgetAmount(e.target.value)}
+                value={startingBudget}
+                onChange={(e) => setStartingBudget(Number(e.target.value))}
               />
-              <button
-                onClick={async () => {
-                  if (!budgetCaptain || !budgetAmount) return;
-                  await adjustBudget(roomId, budgetCaptain, Number(budgetAmount));
-                  setBudgetAmount('');
-                }}
-              >
-                Update
-              </button>
-            </section>
-
-            <section className="card admin-wide">
-              <h3>Move Player</h3>
-              <div className="form-row">
-                <select value={moveFrom} onChange={(e) => setMoveFrom(e.target.value)}>
-                  <option value="">From team</option>
-                  {approved.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.teamName}
-                    </option>
-                  ))}
-                </select>
-                <select value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
-                  <option value="">To team</option>
-                  {approved.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.teamName}
-                    </option>
-                  ))}
-                </select>
-                <select value={movePlayerId} onChange={(e) => setMovePlayerId(e.target.value)}>
-                  <option value="">Player</option>
-                  {approved
-                    .find((c) => c.id === moveFrom)
-                    ?.squad.map((p) => (
-                      <option key={p.playerId} value={p.playerId}>
-                        {p.name}
-                      </option>
-                    ))}
-                </select>
-                <button
-                  onClick={async () => {
-                    if (!movePlayerId || !moveFrom || !moveTo) return;
-                    await movePlayer(roomId, movePlayerId, moveFrom, moveTo, captains);
-                    setMovePlayerId('');
-                  }}
-                >
-                  Move
+            </div>
+            <div className="form-row">
+              <label>Bid time per player (seconds)</label>
+              <input
+                type="number"
+                min={5}
+                value={bidTimerSeconds}
+                disabled={!['waiting', 'lobby'].includes(state.phase)}
+                onChange={(e) => setBidTimerSeconds(Number(e.target.value))}
+              />
+              <p className="muted config-hint">
+                How long captains have to bid. Default: {TIMER_SECONDS}s
+              </p>
+            </div>
+            <div className="form-row">
+              <label>Result display time (seconds)</label>
+              <input
+                type="number"
+                min={3}
+                value={resultTimerSeconds}
+                disabled={!['waiting', 'lobby'].includes(state.phase)}
+                onChange={(e) => setResultTimerSeconds(Number(e.target.value))}
+              />
+              <p className="muted config-hint">
+                How long sold/unsold info is shown before the next player. Default: {RESULT_SECONDS}s
+              </p>
+            </div>
+            {['waiting', 'lobby'].includes(state.phase) && (
+              <div className="config-actions">
+                <button type="button" onClick={handleSaveTimers} disabled={timerSaveBusy}>
+                  {timerSaveBusy ? 'Saving…' : 'Save Timer Settings'}
                 </button>
+                {state.phase === 'waiting' && approved.length > 0 && (
+                  <button type="button" onClick={() => moveToLobby(roomId, startingBudget)}>
+                    Open Lobby
+                  </button>
+                )}
               </div>
-            </section>
+            )}
+            {timerSaveError && <p className="error">{timerSaveError}</p>}
+          </section>
 
+          {(state.phase === 'waiting' || state.phase === 'lobby') && (
             <section className="card admin-wide">
-              <h3>View All Teams</h3>
-              <CaptainDashboard captains={captains} />
+              <h3>Player Setup ({players.length} players)</h3>
+              <div className="grid-2">
+                <div>
+                  <h4>Upload CSV</h4>
+                  <p className="muted">
+                    Columns: Name, Position, Last Match Rating, Fitness, Leadership, Team Influence
+                  </p>
+                  <input type="file" accept=".csv" onChange={handleCsvUpload} />
+                  {csvError && <p className="error">{csvError}</p>}
+                </div>
+                <div>
+                  <h4>Add Manually</h4>
+                  <input
+                    placeholder="Player name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                  <div className="position-picker">
+                    {ALL_POSITIONS.map((pos) => (
+                      <button
+                        key={pos}
+                        type="button"
+                        className={form.positions.includes(pos) ? 'active' : ''}
+                        onClick={() => togglePosition(pos)}
+                      >
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="ratings-input">
+                    {(['lastMatchRating', 'fitness', 'leadership', 'teamInfluence'] as const).map(
+                      (field) => (
+                        <label key={field}>
+                          {field.replace(/([A-Z])/g, ' $1')}
+                          <input
+                            type="number"
+                            min={1}
+                            max={5}
+                            value={form[field]}
+                            onChange={(e) => setForm({ ...form, [field]: Number(e.target.value) })}
+                          />
+                        </label>
+                      ),
+                    )}
+                  </div>
+                  <button type="button" onClick={handleAddPlayer}>
+                    Add Player
+                  </button>
+                </div>
+              </div>
+              {players.length > 0 && (
+                <ul className="player-list">
+                  {players.map((p) => (
+                    <li key={p.id}>
+                      {p.name} ({p.positions.join('/')})
+                      <button
+                        className="btn-small btn-danger"
+                        onClick={() => deletePlayer(roomId, p.id)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
-          </>
-        )}
+          )}
 
-        <section className="card">
-          <h3>Danger Zone</h3>
-          <button className="btn-danger" onClick={() => resetRoom(roomId)}>
-            Reset This Room
-          </button>
-        </section>
-      </div>
+          {state.phase === 'lobby' && (
+            <section className="card admin-wide">
+              <h3>Lobby — {approved.length} Captains Ready</h3>
+              <ul className="captain-list">
+                {approved.map((c) => (
+                  <li key={c.id}>
+                    <strong>{c.teamName}</strong> ({c.name}) — ₹{c.budget}
+                  </li>
+                ))}
+              </ul>
+              <button
+                className="btn-primary btn-lg"
+                disabled={players.length === 0 || approved.length === 0}
+                onClick={() => startAuction(roomId, players)}
+              >
+                Start Auction
+              </button>
+              {players.length === 0 && <p className="error">Add players before starting</p>}
+            </section>
+          )}
+
+          <section className="card">
+            <h3>Danger Zone</h3>
+            <button className="btn-danger" onClick={() => resetRoom(roomId)}>
+              Reset This Room
+            </button>
+          </section>
+        </div>
+      </CollapsibleSection>
     </Layout>
   );
 }
 
 export function AdminAuctionPage() {
   const roomId = useRoomId();
-  const { state, captains, players, bids } = useAuctionData(roomId);
-  const currentPlayer = players.find((p) => p.id === state.currentPlayerId);
-  const isPaused = isAuctionPaused(state);
-  const countdown = useCountdown(state.bidDeadline, isPaused, state.pausedRemainingMs);
+  const navigate = useNavigate();
 
-  return (
-    <Layout
-      title="Live Auction"
-      subtitle={state.displayName || 'Admin View'}
-      badge={isPaused ? 'PAUSED' : roomId}
-    >
-      {state.phase === 'result' && state.resultDisplay && (
-        <div className="result-banner">
-          <h2>{state.resultDisplay.message}</h2>
-        </div>
-      )}
+  useEffect(() => {
+    navigate(`/room/${roomId}/admin`, { replace: true });
+  }, [roomId, navigate]);
 
-      {currentPlayer && (
-        <>
-          <PlayerCard player={currentPlayer} large />
-          <div className="bid-status">
-            <div className="bid-amount">
-              <span className="label">Current Bid</span>
-              <span className="value">₹{state.currentBid?.amount ?? 10}</span>
-            </div>
-            <div className="bid-leader">
-              <span className="label">Highest Bidder</span>
-              <span className="value">{state.currentBid?.captainName ?? '—'}</span>
-            </div>
-            <div className={`timer ${countdown <= 5 ? 'timer-urgent' : ''}`}>
-              <span className="label">Timer</span>
-              <span className="value">{state.phase === 'live' ? `${countdown}s` : '—'}</span>
-            </div>
-          </div>
-          <BidFeed bids={bids} />
-        </>
-      )}
-
-      <CaptainDashboard captains={captains} />
-      <p className="muted">
-        <a href={`/room/${roomId}/admin`}>← Back to admin controls</a>
-      </p>
-    </Layout>
-  );
+  return null;
 }

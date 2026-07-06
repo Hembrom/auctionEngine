@@ -3,13 +3,23 @@ import { isFirebaseConfigured } from '../lib/firebaseConfig';
 export function FirebaseBanner() {
   if (isFirebaseConfigured()) return null;
 
+  const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+
   return (
     <div className="firebase-banner">
       <strong>Firebase not connected</strong>
-      <p>
-        Create <code>.env.local</code> from <code>.env.example</code>, paste your Firebase web app
-        config, then restart: <code>npm run dev</code>
-      </p>
+      {isVercel ? (
+        <p>
+          Add your <code>VITE_FIREBASE_*</code> variables in Vercel → Project Settings →
+          Environment Variables (copy from Firebase Console → Project settings → Your apps → Web
+          app). Then <strong>Redeploy</strong> — Vite bakes env vars in at build time.
+        </p>
+      ) : (
+        <p>
+          Create <code>.env.local</code> from <code>.env.example</code>, paste your Firebase web app
+          config, then restart: <code>npm run dev</code>
+        </p>
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ export function LobbyPage() {
   const me = captains.find((c) => c.id === captainId);
   const [teamName, setTeamNameLocal] = useState(me?.teamName ?? '');
   const [saved, setSaved] = useState(false);
+  const [teamError, setTeamError] = useState('');
 
   const approved = captains.filter((c) => c.status === 'approved');
 
@@ -38,9 +39,14 @@ export function LobbyPage() {
 
   const handleSaveTeam = async () => {
     if (!captainId || !me) return;
-    await setTeamName(roomId, captainId, teamName, me.name);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setTeamError('');
+    try {
+      await setTeamName(roomId, captainId, teamName, me.name);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      setTeamError((e as Error).message);
+    }
   };
 
   return (
@@ -70,6 +76,7 @@ export function LobbyPage() {
                 />
                 <button onClick={handleSaveTeam}>Save</button>
                 {saved && <span className="success">Saved!</span>}
+                {teamError && <p className="error">{teamError}</p>}
               </div>
               <p className="muted">Budget: ₹{state.startingBudget}</p>
             </>

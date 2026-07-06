@@ -1,74 +1,92 @@
-import { Fragment, useEffect, useState } from 'react';
-import type { Captain } from '../types';
-import { formatRemainingSlots } from '../lib/auctionLogic';
+import type { Captain, Position } from '../types';
+import { formatRemainingSlots, getAvailableBudget } from '../lib/auctionLogic';
+
+const POSITION_ORDER: Position[] = ['GK', 'DEF', 'MID', 'ST'];
 
 interface CaptainDashboardProps {
   captains: Captain[];
   highlightCaptainId?: string | null;
+  title?: string;
 }
 
-export function CaptainDashboard({ captains, highlightCaptainId }: CaptainDashboardProps) {
-  const approved = captains.filter((c) => c.status === 'approved');
-  const [expanded, setExpanded] = useState<string | null>(highlightCaptainId ?? null);
-
-  useEffect(() => {
-    if (highlightCaptainId) setExpanded(highlightCaptainId);
-  }, [highlightCaptainId, captains]);
+function CaptainSquadCard({
+  captain,
+  highlight,
+}: {
+  captain: Captain;
+  highlight?: boolean;
+}) {
+  const available = getAvailableBudget(captain);
+  const byPosition = { GK: [], DEF: [], MID: [], ST: [] } as Record<Position, typeof captain.squad>;
+  for (const p of captain.squad) {
+    byPosition[p.position].push(p);
+  }
 
   return (
-    <div className="captain-dashboard">
-      <h3>Captain Dashboard</h3>
-      <div className="dashboard-table-wrap">
-        <table className="dashboard-table">
-          <thead>
-            <tr>
-              <th>Captain</th>
-              <th>Team</th>
-              <th>Budget</th>
-              <th>Bought</th>
-              <th>Remaining Slots</th>
-            </tr>
-          </thead>
-          <tbody>
-            {approved.map((c) => (
-              <Fragment key={c.id}>
-                <tr
-                  className={
-                    c.id === highlightCaptainId ? 'highlight-row you-row' : ''
-                  }
-                  onClick={() => setExpanded(expanded === c.id ? null : c.id)}
-                >
-                  <td>
-                    {c.name}
-                    {c.id === highlightCaptainId && (
-                      <span className="you-badge">You</span>
-                    )}
-                  </td>
-                  <td>{c.teamName}</td>
-                  <td>₹{c.budget}</td>
-                  <td>{c.squad.length}</td>
-                  <td>{formatRemainingSlots(c)}</td>
-                </tr>
-                {expanded === c.id && c.squad.length > 0 && (
-                  <tr className="squad-expand">
-                    <td colSpan={5}>
-                      <ul className="squad-list">
-                        {c.squad.map((p) => (
-                          <li key={p.playerId}>
-                            <span className={`pos-tag pos-${p.position.toLowerCase()}`}>
-                              {p.position}
-                            </span>
-                            {p.name} — ₹{p.price}
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+    <div className={`captain-squad-card ${highlight ? 'captain-squad-card-highlight' : ''}`}>
+      <div className="captain-squad-card-header">
+        <div>
+          <h4>{captain.teamName}</h4>
+          <span className="muted">{captain.name}</span>
+          {highlight && <span className="you-badge">You</span>}
+        </div>
+      </div>
+      <div className="captain-squad-card-stats">
+        <span>Budget <strong>₹{captain.budget}</strong></span>
+        <span>Available <strong>₹{available}</strong></span>
+        <span>Players <strong>{captain.squad.length}/7</strong></span>
+      </div>
+      <p className="muted captain-squad-need">Need: {formatRemainingSlots(captain)}</p>
+      <div className="captain-squad-rows">
+        {POSITION_ORDER.map((pos) => (
+          <div key={pos} className="captain-squad-row">
+            <span className={`pos-tag pos-${pos.toLowerCase()}`}>{pos}</span>
+            <div className="captain-squad-players">
+              {byPosition[pos].length === 0 ? (
+                <span className="muted">—</span>
+              ) : (
+                byPosition[pos].map((p) => (
+                  <div key={p.playerId} className="captain-squad-player">
+                    <span>{p.name}</span>
+                    <span className="muted">₹{p.price}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function CaptainDashboard({
+  captains,
+  highlightCaptainId,
+  title = 'All Teams',
+}: CaptainDashboardProps) {
+  const approved = captains.filter((c) => c.status === 'approved');
+
+  if (approved.length === 0) {
+    return (
+      <div className="captain-squads-board">
+        <h3>{title}</h3>
+        <p className="muted">No approved captains yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="captain-squads-board">
+      <h3>{title}</h3>
+      <div className="captain-squads-grid">
+        {approved.map((c) => (
+          <CaptainSquadCard
+            key={c.id}
+            captain={c}
+            highlight={c.id === highlightCaptainId}
+          />
+        ))}
       </div>
     </div>
   );

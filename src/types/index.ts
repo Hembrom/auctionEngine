@@ -82,7 +82,9 @@ export interface AuctionState {
   resultDisplay: ResultDisplay | null;
   resultEndsAt: number | null;
   adminId: string | null;
-  /** Seconds captains have to bid on each player. Default 15. */
+  /** Captain IDs who opted out of bidding on the current player. */
+  optedOutCaptainIds?: string[];
+  /** Seconds captains have to bid on each player. Default 30. */
   bidTimerSeconds?: number;
   /** Seconds to show sold/unsold result before next player. Default 10. */
   resultTimerSeconds?: number;
@@ -103,6 +105,6 @@ export const OUTFIELD_SIZE = SQUAD_SIZE - GK_REQUIRED;
 export const STARTING_BUDGET = 1000;
 export const STARTING_BID = 10;
 export const MIN_BID_INCREMENT = 1;
-export const TIMER_SECONDS = 15;
+export const TIMER_SECONDS = 30;
 export const RESULT_SECONDS = 10;
 export const POSITION_ORDER: Position[] = ['GK', 'ST', 'DEF', 'MID'];

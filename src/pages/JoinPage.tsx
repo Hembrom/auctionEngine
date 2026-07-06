@@ -12,16 +12,17 @@ export function JoinPage() {
   const navigate = useNavigate();
   const { state, firebaseError } = useAuctionData(roomId);
   const [name, setName] = useState('');
+  const [teamName, setTeamName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !teamName.trim()) return;
     setLoading(true);
     setError('');
     try {
-      const id = await requestJoin(roomId, name.trim());
+      const id = await requestJoin(roomId, name.trim(), teamName.trim());
       setCaptainId(roomId, id);
       navigate(`/room/${roomId}/waiting`);
     } catch (e) {
@@ -34,7 +35,7 @@ export function JoinPage() {
   return (
     <Layout
       title={state.displayName || roomId}
-      subtitle="Enter your name to join as a captain"
+      subtitle="Enter your captain and team name to join"
       badge={roomId}
     >
       <FirebaseBanner />
@@ -50,7 +51,15 @@ export function JoinPage() {
             onChange={(e) => setName(e.target.value)}
             autoFocus
           />
-          <button type="submit" disabled={loading || !name.trim()}>
+          <label htmlFor="team">Team Name</label>
+          <input
+            id="team"
+            type="text"
+            placeholder="Your team name"
+            value={teamName}
+            onChange={(e) => setTeamName(e.target.value)}
+          />
+          <button type="submit" disabled={loading || !name.trim() || !teamName.trim()}>
             {loading ? 'Requesting...' : 'Request to Join'}
           </button>
           {error && <p className="error">{error}</p>}

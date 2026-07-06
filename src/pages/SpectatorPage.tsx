@@ -2,40 +2,61 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
+import { AuctionDashboardSections } from '../components/AuctionDashboardSections';
 import { useAuctionData } from '../hooks/useAuctionData';
+import { useAuctionEngine } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
 import { setSpectator } from '../hooks/useSession';
-import { pathForAuctionPhase } from '../lib/roomUtils';
 
 export function SpectatorPage() {
   const roomId = useRoomId();
   const navigate = useNavigate();
-  const { state, loading, firebaseError } = useAuctionData(roomId);
+  const { state, captains, players, bids, loading, firebaseError } = useAuctionData(roomId);
+
+  useAuctionEngine(roomId, state, players, captains);
 
   useEffect(() => {
     if (loading || firebaseError) return;
     setSpectator(roomId);
-    navigate(pathForAuctionPhase(roomId, state.phase), { replace: true });
-  }, [loading, firebaseError, state.phase, roomId, navigate]);
+  }, [loading, firebaseError, roomId]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (state.phase === 'ended') {
+      navigate(`/room/${roomId}/final`, { replace: true });
+    }
+  }, [loading, state.phase, navigate, roomId]);
 
   return (
     <Layout
-      title={state.displayName || roomId}
+      title={state.displayName || 'Live Auction'}
       subtitle="Watch the auction live"
-      badge="Spectator"
+      badge="SPECTATOR"
     >
       <FirebaseBanner />
       <FirebaseErrorBanner error={firebaseError} />
-      <div className="card center-card">
-        <p className="muted">
-          Spectators can follow the live auction, see bids, and view final teams — but cannot bid
-          or join as a captain.
-        </p>
-        <p>Entering as spectator…</p>
-        <p className="muted join-alt-link">
-          Want to bid? <Link to={`/room/${roomId}`}>Join as a captain</Link>
-        </p>
-      </div>
+
+      {!loading && !firebaseError && (
+        <>
+          <p className="connection-status">
+            Room <strong>{roomId}</strong> · {state.phase}
+          </p>
+          <p className="muted join-alt-link">
+            Want to bid? <Link to={`/room/${roomId}`}>Join as a captain</Link>
+          </p>
+
+          <AuctionDashboardSections
+            roomId={roomId}
+            state={state}
+            players={players}
+            bids={bids}
+            captains={captains}
+            showSpectatorBanner
+          />
+        </>
+      )}
+
+      {loading && <p className="muted">Loading auction…</p>}
     </Layout>
   );
 }
