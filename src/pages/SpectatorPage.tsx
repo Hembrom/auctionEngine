@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { SpectatorDashboardSections } from '../components/SpectatorDashboardSections';
@@ -41,9 +41,6 @@ export function SpectatorPage() {
         <>
           <p className="connection-status">
             Room <strong>{roomId}</strong> · {state.phase}
-          </p>
-          <p className="muted join-alt-link">
-            Want to bid? <Link to={`/room/${roomId}`}>Join as a captain</Link>
           </p>
 
           <SpectatorDashboardSections
