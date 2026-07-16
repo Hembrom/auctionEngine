@@ -37,6 +37,7 @@ export function JoinPage() {
       title={state.displayName || roomId}
       subtitle="Enter your captain and team name to join"
       badge={roomId}
+      theme="captain"
     >
       <FirebaseBanner />
       <FirebaseErrorBanner error={firebaseError} />

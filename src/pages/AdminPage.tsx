@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { CollapsibleSection } from '../components/CollapsibleSection';
 import { AuctionDashboardSections } from '../components/AuctionDashboardSections';
+import { AdminLobbySection } from '../components/AdminLobbySection';
 import { AdminPlayerManagement } from '../components/AdminPlayerManagement';
 import { ShareRoomLinks } from '../components/ShareRoomLinks';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
@@ -55,6 +56,7 @@ export function AdminPage() {
   const [pauseBusy, setPauseBusy] = useState(false);
   const [unsoldActionError, setUnsoldActionError] = useState('');
   const [unsoldActionBusy, setUnsoldActionBusy] = useState(false);
+  const [openLobbyBusy, setOpenLobbyBusy] = useState(false);
 
   const [form, setForm] = useState<PlayerFormData>({
     name: '',
@@ -75,7 +77,6 @@ export function AdminPage() {
   const isPaused = isAuctionPaused(state);
   const countdown = useCountdown(state.bidDeadline, isPaused, state.pausedRemainingMs);
   const isLivePhase = ['live', 'result', 'unsold'].includes(state.phase);
-  const isSetupPhase = ['waiting', 'lobby', 'setup'].includes(state.phase);
 
   useAuctionEngine(roomId, state, players, captains);
 
@@ -170,6 +171,16 @@ export function AdminPage() {
     setForm({ ...form, name: '' });
   };
 
+  const handleOpenLobby = async () => {
+    if (openLobbyBusy) return;
+    setOpenLobbyBusy(true);
+    try {
+      await moveToLobby(roomId, startingBudget);
+    } finally {
+      setOpenLobbyBusy(false);
+    }
+  };
+
   const togglePosition = (pos: Position) => {
     if (pos === 'GK') {
       setForm({ ...form, positions: ['GK'] });
@@ -247,6 +258,7 @@ export function AdminPage() {
       title="Admin Panel"
       subtitle={state.displayName || roomId}
       badge={state.phase}
+      theme="admin"
     >
       <FirebaseBanner />
       <FirebaseErrorBanner error={firebaseError} />
@@ -291,7 +303,16 @@ export function AdminPage() {
         }
       />
 
-      <CollapsibleSection title="Room Setup" defaultOpen={isSetupPhase}>
+      <AdminLobbySection
+        phase={state.phase}
+        players={players}
+        approved={approved}
+        onOpenLobby={handleOpenLobby}
+        onStartAuction={() => startAuction(roomId, players)}
+        openLobbyBusy={openLobbyBusy}
+      />
+
+      <CollapsibleSection title="Room Setup" defaultOpen={false}>
         <div className="admin-grid">
           <section className="card">
             <h3>Waiting Room</h3>
@@ -362,11 +383,6 @@ export function AdminPage() {
                 <button type="button" onClick={handleSaveTimers} disabled={timerSaveBusy}>
                   {timerSaveBusy ? 'Saving…' : 'Save Timer Settings'}
                 </button>
-                {state.phase === 'waiting' && approved.length > 0 && (
-                  <button type="button" onClick={() => moveToLobby(roomId, startingBudget)}>
-                    Open Lobby
-                  </button>
-                )}
               </div>
             )}
             {timerSaveError && <p className="error">{timerSaveError}</p>}
@@ -442,35 +458,21 @@ export function AdminPage() {
             </section>
           )}
 
-          {state.phase === 'lobby' && (
-            <section className="card admin-wide">
-              <h3>Lobby — {approved.length} Captains Ready</h3>
-              <ul className="captain-list">
-                {approved.map((c) => (
-                  <li key={c.id}>
-                    <strong>{c.teamName}</strong> ({c.name}) — ₹{c.budget}
-                  </li>
-                ))}
-              </ul>
-              <button
-                className="btn-primary btn-lg"
-                disabled={players.length === 0 || approved.length === 0}
-                onClick={() => startAuction(roomId, players)}
-              >
-                Start Auction
-              </button>
-              {players.length === 0 && <p className="error">Add players before starting</p>}
-            </section>
-          )}
-
-          <section className="card">
-            <h3>Danger Zone</h3>
-            <button className="btn-danger" onClick={() => resetRoom(roomId)}>
-              Reset This Room
-            </button>
-          </section>
         </div>
       </CollapsibleSection>
+
+      <div className="admin-danger-zone-wrap">
+        <CollapsibleSection title="Danger Zone" defaultOpen={false} className="collapsible-danger">
+          <div className="danger-zone-card">
+            <p className="muted">
+              Reset permanently clears captains, players, bids, and auction progress for this room.
+            </p>
+            <button type="button" className="btn-danger" onClick={() => resetRoom(roomId)}>
+              Reset This Room
+            </button>
+          </div>
+        </CollapsibleSection>
+      </div>
     </Layout>
   );
 }

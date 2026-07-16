@@ -54,6 +54,7 @@ export function AuctionPage() {
       }
       badge={roomId}
       captainName={me ? `${me.name} (${me.teamName})` : undefined}
+      theme="captain"
     >
       {me && <CaptainIdentityBar captain={me} />}
 

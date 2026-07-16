@@ -58,6 +58,7 @@ export function LobbyPage() {
       subtitle={state.displayName || 'Auction starting soon'}
       badge={spectating ? 'SPECTATOR' : `${approved.length} captains`}
       captainName={me ? `${me.name} (${me.teamName})` : undefined}
+      theme={spectating ? 'spectator' : 'captain'}
     >
       {spectating && <SpectatorBanner />}
       {me && <CaptainIdentityBar captain={me} />}

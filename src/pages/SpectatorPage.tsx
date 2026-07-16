@@ -32,6 +32,7 @@ export function SpectatorPage() {
       title={state.displayName || 'Live Auction'}
       subtitle="Watch the auction live"
       badge="SPECTATOR"
+      theme="spectator"
     >
       <FirebaseBanner />
       <FirebaseErrorBanner error={firebaseError} />

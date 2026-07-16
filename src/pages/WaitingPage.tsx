@@ -31,7 +31,7 @@ export function WaitingPage() {
 
   if (!me) {
     return (
-      <Layout title="Waiting Room" badge={roomId}>
+      <Layout title="Waiting Room" badge={roomId} theme="captain">
         <div className="card center-card"><p>Loading...</p></div>
       </Layout>
     );
@@ -39,7 +39,7 @@ export function WaitingPage() {
 
   if (me.status === 'rejected') {
     return (
-      <Layout title="Access Denied" badge={roomId}>
+      <Layout title="Access Denied" badge={roomId} theme="captain">
         <div className="card center-card">
           <p className="error">Your request to join was rejected by the admin.</p>
         </div>
@@ -49,7 +49,7 @@ export function WaitingPage() {
 
   if (me.status === 'approved') {
     return (
-      <Layout title="Approved!" badge={roomId}>
+      <Layout title="Approved!" badge={roomId} theme="captain">
         <div className="card center-card">
           <p>You're in! Taking you to the lobby...</p>
         </div>
