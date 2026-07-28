@@ -29,12 +29,11 @@ import {
   endAuction,
   updateTimerSettings,
 } from '../lib/auctionService';
+import { PlayerRegistrationForm } from '../components/PlayerRegistrationForm';
 import { parseCsvPlayers, validatePlayerPositions, getUnsoldPlayers, areAllSquadsFull } from '../lib/auctionLogic';
+import { createDefaultPlayerForm, sanitizePlayerForm } from '../lib/playerUtils';
 import { isAuctionPaused, getBidTimerSeconds, getResultTimerSeconds } from '../lib/auctionState';
-import type { PlayerFormData, Position } from '../types';
 import { STARTING_BUDGET, TIMER_SECONDS, RESULT_SECONDS } from '../types';
-
-const ALL_POSITIONS: Position[] = ['GK', 'DEF', 'MID', 'ST'];
 
 export function AdminPage() {
   const roomId = useRoomId();
@@ -58,14 +57,7 @@ export function AdminPage() {
   const [unsoldActionBusy, setUnsoldActionBusy] = useState(false);
   const [openLobbyBusy, setOpenLobbyBusy] = useState(false);
 
-  const [form, setForm] = useState<PlayerFormData>({
-    name: '',
-    positions: ['MID'],
-    lastMatchRating: 3,
-    fitness: 3,
-    leadership: 3,
-    teamInfluence: 3,
-  });
+  const [form, setForm] = useState(createDefaultPlayerForm);
 
   const adminId = getAdminId(roomId);
   const isOwner = !!adminId && state.adminId === adminId;
@@ -165,10 +157,12 @@ export function AdminPage() {
   };
 
   const handleAddPlayer = async () => {
-    const err = validatePlayerPositions(form.positions);
-    if (err || !form.name.trim()) return;
-    await addPlayer(roomId, { ...form, name: form.name.trim() });
-    setForm({ ...form, name: '' });
+    const data = sanitizePlayerForm(form);
+    if (!data.name) return;
+    const posError = validatePlayerPositions(data.positions);
+    if (posError) return;
+    await addPlayer(roomId, data);
+    setForm(createDefaultPlayerForm());
   };
 
   const handleOpenLobby = async () => {
@@ -179,17 +173,6 @@ export function AdminPage() {
     } finally {
       setOpenLobbyBusy(false);
     }
-  };
-
-  const togglePosition = (pos: Position) => {
-    if (pos === 'GK') {
-      setForm({ ...form, positions: ['GK'] });
-      return;
-    }
-    const withoutGk = form.positions.filter((p) => p !== 'GK');
-    const has = withoutGk.includes(pos);
-    const next = has ? withoutGk.filter((p) => p !== pos) : [...withoutGk, pos];
-    setForm({ ...form, positions: next.length ? next : ['MID'] });
   };
 
   const adminLiveControls = isLivePhase ? (
@@ -390,54 +373,25 @@ export function AdminPage() {
 
           {(state.phase === 'waiting' || state.phase === 'lobby') && (
             <section className="card admin-wide">
-              <h3>Player Setup ({players.length} players)</h3>
-              <div className="grid-2">
+              <h3>Player Registration ({players.length} players)</h3>
+              <div className="grid-2 registration-setup-grid">
                 <div>
                   <h4>Upload CSV</h4>
                   <p className="muted">
-                    Columns: Name, Position, Last Match Rating, Fitness, Leadership, Team Influence
+                    Columns: Name, Position, Organizing Comfort, Teammate Guidance, Dribbling,
+                    Shooting, Passing, Defending, Physical, Pace, Stamina (all ratings 1–10)
                   </p>
                   <input type="file" accept=".csv" onChange={handleCsvUpload} />
                   {csvError && <p className="error">{csvError}</p>}
                 </div>
                 <div>
-                  <h4>Add Manually</h4>
-                  <input
-                    placeholder="Player name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  <h4>Registration Form</h4>
+                  <PlayerRegistrationForm
+                    form={form}
+                    onChange={setForm}
+                    onSubmit={handleAddPlayer}
+                    showIntro
                   />
-                  <div className="position-picker">
-                    {ALL_POSITIONS.map((pos) => (
-                      <button
-                        key={pos}
-                        type="button"
-                        className={form.positions.includes(pos) ? 'active' : ''}
-                        onClick={() => togglePosition(pos)}
-                      >
-                        {pos}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="ratings-input">
-                    {(['lastMatchRating', 'fitness', 'leadership', 'teamInfluence'] as const).map(
-                      (field) => (
-                        <label key={field}>
-                          {field.replace(/([A-Z])/g, ' $1')}
-                          <input
-                            type="number"
-                            min={1}
-                            max={5}
-                            value={form[field]}
-                            onChange={(e) => setForm({ ...form, [field]: Number(e.target.value) })}
-                          />
-                        </label>
-                      ),
-                    )}
-                  </div>
-                  <button type="button" onClick={handleAddPlayer}>
-                    Add Player
-                  </button>
                 </div>
               </div>
               {players.length > 0 && (

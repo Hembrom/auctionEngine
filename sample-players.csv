@@ -1,13 +1,13 @@
-Name,Position,Last Match Rating,Fitness,Leadership,Team Influence
-Arjun Mehta,GK,4,5,4,3
-Rohan Sharma,GK,3,4,3,4
-Vikram Singh,ST,5,4,3,5
-Amit Patel,ST,4,5,4,4
-Karan Joshi,ST,3,3,2,3
-Rahul Verma,DEF,4,4,3,4
-Suresh Kumar,DEF,3,5,4,3
-Deepak Rao,DEF/MID,4,4,5,4
-Nikhil Shah,MID,5,4,4,5
-Pranav Iyer,MID,4,3,3,4
-Anil Nair,MID/ST,3,4,2,3
-Sanjay Gupta,DEF/ST,4,4,4,3
+Name,Position,Organizing Comfort,Teammate Guidance,Dribbling,Shooting,Passing,Defending,Physical,Pace,Stamina
+Arjun Mehta,GK,7,8,4,3,6,9,7,5,8
+Rohan Sharma,GK,6,7,5,4,7,8,8,6,7
+Vikram Singh,ST,6,5,8,9,7,4,7,8,7
+Amit Patel,ST,7,6,7,8,6,5,8,7,8
+Karan Joshi,ST,5,4,6,7,5,4,6,8,6
+Rahul Verma,DEF,6,7,5,4,7,8,8,6,7
+Suresh Kumar,DEF,7,8,4,5,8,9,7,5,8
+Deepak Rao,DEF/MID,8,9,6,6,8,7,7,6,8
+Nikhil Shah,MID,7,8,8,7,9,6,7,7,9
+Pranav Iyer,MID,6,6,7,6,8,5,6,7,8
+Anil Nair,MID/ST,5,5,7,7,6,5,6,8,7
+Sanjay Gupta,DEF/ST,6,6,6,6,7,7,8,6,7

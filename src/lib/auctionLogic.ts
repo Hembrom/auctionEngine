@@ -1,5 +1,4 @@
-import type { Captain, CurrentBid, Player, Position } from '../types';
-import type { AuctionState } from '../types';
+import type { Captain, CurrentBid, Player, Position, AuctionState } from '../types';
 import {
   POSITION_ORDER,
   RESULT_SECONDS,
@@ -8,6 +7,7 @@ import {
   STARTING_BUDGET,
   TIMER_SECONDS,
 } from '../types';
+import { clampRating } from './playerUtils';
 
 export function hasGoalkeeper(captain: Captain): boolean {
   return captain.squad.some((p) => p.position === 'GK');
@@ -246,34 +246,76 @@ export function parseCsvPlayers(csv: string): {
   const header = lines[0].toLowerCase().split(',').map((h) => h.trim());
   const nameIdx = header.findIndex((h) => h.includes('name'));
   const posIdx = header.findIndex((h) => h.includes('position'));
+  const organizingIdx = header.findIndex(
+    (h) => h.includes('organizing') || h.includes('communication') || h.includes('pressure'),
+  );
+  const guidanceIdx = header.findIndex(
+    (h) => h.includes('guidance') || h.includes('teammate') || h.includes('look to you'),
+  );
+  const dribblingIdx = header.findIndex((h) => h.includes('dribbling'));
+  const shootingIdx = header.findIndex((h) => h.includes('shooting'));
+  const passingIdx = header.findIndex((h) => h.includes('passing'));
+  const defendingIdx = header.findIndex((h) => h.includes('defending'));
+  const physicalIdx = header.findIndex((h) => h.includes('physical'));
+  const paceIdx = header.findIndex((h) => h.includes('pace'));
+  const staminaIdx = header.findIndex((h) => h.includes('stamina'));
+
   const ratingIdx = header.findIndex((h) => h.includes('rating') || h.includes('last match'));
   const fitnessIdx = header.findIndex((h) => h.includes('fitness'));
   const leadershipIdx = header.findIndex((h) => h.includes('leadership'));
   const influenceIdx = header.findIndex((h) => h.includes('influence'));
 
+  const isLegacyFormat = dribblingIdx === -1 && (ratingIdx !== -1 || fitnessIdx !== -1);
+
   if (nameIdx === -1 || posIdx === -1) {
     return { players: [], errors: ['CSV must have Name and Position columns'] };
   }
+
+  const readRating = (cols: string[], idx: number, fallback: number) =>
+    clampRating(Number(cols[idx] ?? fallback) || fallback);
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map((c) => c.trim());
     if (!cols[nameIdx]) continue;
 
     const posStr = cols[posIdx].toUpperCase();
-    const positions = posStr.split(/[/|&]/).map((p) => p.trim()) as Position[];
+    const positions = posStr.split(/[/|&]/).map((p) => p.trim()) as import('../types').Position[];
     const posError = validatePlayerPositions(positions);
     if (posError) {
       errors.push(`Row ${i + 1}: ${posError}`);
       continue;
     }
 
+    if (isLegacyFormat) {
+      const base = readRating(cols, ratingIdx, 3);
+      players.push({
+        name: cols[nameIdx],
+        positions,
+        organizingComfort: readRating(cols, leadershipIdx, 3) * 2,
+        teammateGuidance: readRating(cols, influenceIdx, 3) * 2,
+        dribbling: base * 2,
+        shooting: readRating(cols, ratingIdx, 3) * 2,
+        passing: readRating(cols, fitnessIdx, 3) * 2,
+        defending: readRating(cols, leadershipIdx, 3) * 2,
+        physical: readRating(cols, fitnessIdx, 3) * 2,
+        pace: readRating(cols, ratingIdx, 3) * 2,
+        stamina: readRating(cols, fitnessIdx, 3) * 2,
+      });
+      continue;
+    }
+
     players.push({
       name: cols[nameIdx],
       positions,
-      lastMatchRating: Number(cols[ratingIdx] ?? 3) || 3,
-      fitness: Number(cols[fitnessIdx] ?? 3) || 3,
-      leadership: Number(cols[leadershipIdx] ?? 3) || 3,
-      teamInfluence: Number(cols[influenceIdx] ?? 3) || 3,
+      organizingComfort: readRating(cols, organizingIdx, 5),
+      teammateGuidance: readRating(cols, guidanceIdx, 5),
+      dribbling: readRating(cols, dribblingIdx, 5),
+      shooting: readRating(cols, shootingIdx, 5),
+      passing: readRating(cols, passingIdx, 5),
+      defending: readRating(cols, defendingIdx, 5),
+      physical: readRating(cols, physicalIdx, 5),
+      pace: readRating(cols, paceIdx, 5),
+      stamina: readRating(cols, staminaIdx, 5),
     });
   }
 

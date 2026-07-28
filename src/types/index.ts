@@ -13,14 +13,30 @@ export type AuctionPhase =
   | 'unsold'
   | 'ended';
 
+export type PlayerSkill =
+  | 'dribbling'
+  | 'shooting'
+  | 'passing'
+  | 'defending'
+  | 'physical'
+  | 'pace'
+  | 'stamina';
+
 export interface Player {
   id: string;
   name: string;
   positions: Position[];
-  lastMatchRating: number;
-  fitness: number;
-  leadership: number;
-  teamInfluence: number;
+  /** Organizing teammates & decisions under pressure (1–10). */
+  organizingComfort: number;
+  /** How often teammates look to you for guidance (1–10). */
+  teammateGuidance: number;
+  dribbling: number;
+  shooting: number;
+  passing: number;
+  defending: number;
+  physical: number;
+  pace: number;
+  stamina: number;
   status: PlayerStatus;
   soldToCaptainId?: string;
   soldPrice?: number;
@@ -93,10 +109,15 @@ export interface AuctionState {
 export interface PlayerFormData {
   name: string;
   positions: Position[];
-  lastMatchRating: number;
-  fitness: number;
-  leadership: number;
-  teamInfluence: number;
+  organizingComfort: number;
+  teammateGuidance: number;
+  dribbling: number;
+  shooting: number;
+  passing: number;
+  defending: number;
+  physical: number;
+  pace: number;
+  stamina: number;
 }
 
 export const SQUAD_SIZE = 7;

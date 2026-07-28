@@ -38,6 +38,7 @@ import {
 } from './auctionLogic';
 import { isValidRoomSlug, slugifyRoomName } from './roomUtils';
 import { getBidTimerSeconds, getResultTimerSeconds, isAuctionPaused } from './auctionState';
+import { normalizePlayer } from './playerUtils';
 
 function roomPaths(roomId: string) {
   return {
@@ -125,7 +126,9 @@ export function subscribePlayers(
   return onSnapshot(
     roomPaths(roomId).players,
     (snap) => {
-      const players = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Player);
+      const players = snap.docs.map((d) =>
+        normalizePlayer({ id: d.id, ...d.data() } as Player),
+      );
       cb(players);
     },
     (err) => onError?.(err),
