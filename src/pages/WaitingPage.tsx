@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
@@ -58,10 +58,13 @@ export function WaitingPage() {
   }
 
   return (
-    <Layout title="Waiting Room" subtitle="Waiting for admin approval" badge={roomId}>
+    <Layout title="Waiting Room" subtitle="Waiting for admin approval" badge={roomId} theme="captain">
       <div className="card center-card">
         <div className="pulse-dot" />
         <p>Hi <strong>{me.name}</strong>, please wait while the admin reviews your request.</p>
+        <p className="muted" style={{ marginTop: '1rem' }}>
+          Meanwhile you can <Link to={`/room/${roomId}/players`}>browse players</Link>. Shortlisting unlocks after approval.
+        </p>
       </div>
     </Layout>
   );

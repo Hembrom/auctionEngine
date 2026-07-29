@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { roomJoinUrl, roomSpectatorUrl } from '../lib/roomUtils';
+import { roomJoinUrl, roomSpectatorUrl, roomPlayersUrl } from '../lib/roomUtils';
 
 function ShareLinkCard({
   title,
@@ -44,6 +44,11 @@ export function ShareRoomLinks({ roomId }: { roomId: string }) {
         title="Share with Spectators"
         description="Send this link — watch-only, no bidding."
         url={roomSpectatorUrl(roomId)}
+      />
+      <ShareLinkCard
+        title="Browse Players"
+        description="Search, filter, and (for approved captains) shortlist / mark players."
+        url={roomPlayersUrl(roomId)}
       />
     </>
   );

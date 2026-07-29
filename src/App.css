@@ -1895,3 +1895,174 @@ button:disabled {
   flex: 1;
   font-weight: 500;
 }
+
+/* Players browse */
+.players-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.players-hint {
+  margin-bottom: 1rem;
+}
+
+.players-filters {
+  margin-bottom: 1rem;
+}
+
+.players-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .players-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 960px) {
+  .players-filter-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.players-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  padding-top: 1.5rem;
+}
+
+.players-check input {
+  width: auto;
+}
+
+.players-browse-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .players-browse-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.browse-player-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.browse-player-shortlisted {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25);
+}
+
+.browse-player-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.browse-player-top h3 {
+  margin-bottom: 0.35rem;
+}
+
+.browse-overall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3.5rem;
+}
+
+.browse-overall-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.browse-skills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.browse-skill {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+
+.browse-skill strong {
+  color: var(--text);
+}
+
+.browse-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.browse-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mark-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.mark-chip:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.mark-chip-active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--accent);
+  color: #86efac;
+}
+
+.status-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--surface2);
+  color: var(--muted);
+}
+
+.status-available {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+
+.status-sold {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.status-unsold {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}

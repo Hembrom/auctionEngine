@@ -1,4 +1,4 @@
-import type { Position, Player, PlayerFormData, PlayerSkill } from '../types';
+import type { Position, Player, PlayerFormData, PlayerMark, PlayerSkill } from '../types';
 
 export const RATING_MAX = 10;
 
@@ -128,4 +128,33 @@ export function sanitizePlayerForm(form: PlayerFormData): PlayerFormData {
 
 export function getPlayerSkillValue(player: Player, skill: PlayerSkill): number {
   return player[skill];
+}
+
+/** Average of on-pitch skills (1–10), rounded to 1 decimal. */
+export function getOverallRating(player: Player): number {
+  const total = PLAYER_SKILLS.reduce((sum, skill) => sum + getPlayerSkillValue(player, skill), 0);
+  return Math.round((total / PLAYER_SKILLS.length) * 10) / 10;
+}
+
+export const PLAYER_MARKS: PlayerMark[] = ['5-star', '4-star', '3-star', 'local', 'priority'];
+
+export const PLAYER_MARK_LABELS: Record<PlayerMark, string> = {
+  '5-star': '5★',
+  '4-star': '4★',
+  '3-star': '3★',
+  local: 'Local',
+  priority: 'Priority',
+};
+
+const STAR_MARKS = new Set<PlayerMark>(['5-star', '4-star', '3-star']);
+
+/** Toggle a mark; star ratings are mutually exclusive. */
+export function togglePlayerMarkTags(tags: PlayerMark[], mark: PlayerMark): PlayerMark[] {
+  if (tags.includes(mark)) {
+    return tags.filter((t) => t !== mark);
+  }
+  if (STAR_MARKS.has(mark)) {
+    return [...tags.filter((t) => !STAR_MARKS.has(t)), mark];
+  }
+  return [...tags, mark];
 }

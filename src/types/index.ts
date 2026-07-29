@@ -49,6 +49,13 @@ export interface SquadPlayer {
   price: number;
 }
 
+/** Captain-only labels for browsing / shortlisting players. */
+export type PlayerMark = '5-star' | '4-star' | '3-star' | 'local' | 'priority';
+
+export interface CaptainPlayerNote {
+  tags: PlayerMark[];
+}
+
 export interface Captain {
   id: string;
   name: string;
@@ -57,6 +64,10 @@ export interface Captain {
   budget: number;
   squad: SquadPlayer[];
   joinedAt: number;
+  /** Player IDs this captain has shortlisted (personal). */
+  shortlist?: string[];
+  /** Personal tags/marks keyed by player ID. */
+  playerNotes?: Record<string, CaptainPlayerNote>;
 }
 
 export interface Bid {

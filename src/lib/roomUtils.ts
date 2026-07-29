@@ -21,6 +21,10 @@ export function roomSpectatorUrl(roomId: string): string {
   return `${window.location.origin}/room/${roomId}/spectate`;
 }
 
+export function roomPlayersUrl(roomId: string): string {
+  return `${window.location.origin}/room/${roomId}/players`;
+}
+
 export function roomAdminUrl(roomId: string): string {
   return `${window.location.origin}/room/${roomId}/admin`;
 }

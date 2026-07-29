@@ -8,6 +8,7 @@ import { AuctionPage } from './pages/AuctionPage';
 import { FinalPage } from './pages/FinalPage';
 import { AdminPage, AdminAuctionPage } from './pages/AdminPage';
 import { SpectatorPage } from './pages/SpectatorPage';
+import { PlayersPage } from './pages/PlayersPage';
 import './App.css';
 
 function RoomRoute({ children }: { children: React.ReactNode }) {
@@ -59,6 +60,14 @@ function App() {
           element={
             <RoomRoute>
               <FinalPage />
+            </RoomRoute>
+          }
+        />
+        <Route
+          path="/room/:roomId/players"
+          element={
+            <RoomRoute>
+              <PlayersPage />
             </RoomRoute>
           }
         />

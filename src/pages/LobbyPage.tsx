@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
@@ -63,6 +63,12 @@ export function LobbyPage() {
       {spectating && <SpectatorBanner />}
       {me && <CaptainIdentityBar captain={me} />}
       {me && <MySquadPanel captain={me} />}
+
+      <p className="players-nav">
+        <Link to={`/room/${roomId}/players`} className="btn-link">
+          Browse Players
+        </Link>
+      </p>
 
       <div className={spectating ? 'grid-1' : 'grid-2'}>
         {!spectating && (

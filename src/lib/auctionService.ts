@@ -208,6 +208,45 @@ export async function rejectCaptain(roomId: string, captainId: string) {
   await updateDoc(doc(roomPaths(roomId).captains, captainId), { status: 'rejected' });
 }
 
+export async function toggleCaptainShortlist(
+  roomId: string,
+  captainId: string,
+  playerId: string,
+  captain: Captain,
+): Promise<void> {
+  const current = captain.shortlist ?? [];
+  const shortlist = current.includes(playerId)
+    ? current.filter((id) => id !== playerId)
+    : [...current, playerId];
+  await updateDoc(doc(roomPaths(roomId).captains, captainId), { shortlist });
+}
+
+export async function setCaptainPlayerTags(
+  roomId: string,
+  captainId: string,
+  playerId: string,
+  tags: import('../types').PlayerMark[],
+  captain: Captain,
+  alsoShortlist = false,
+): Promise<void> {
+  const playerNotes = { ...(captain.playerNotes ?? {}) };
+  if (tags.length === 0) {
+    delete playerNotes[playerId];
+  } else {
+    playerNotes[playerId] = { tags };
+  }
+
+  const update: Record<string, unknown> = { playerNotes };
+  if (alsoShortlist) {
+    const current = captain.shortlist ?? [];
+    if (!current.includes(playerId)) {
+      update.shortlist = [...current, playerId];
+    }
+  }
+
+  await updateDoc(doc(roomPaths(roomId).captains, captainId), update);
+}
+
 export async function setTeamName(
   roomId: string,
   captainId: string,

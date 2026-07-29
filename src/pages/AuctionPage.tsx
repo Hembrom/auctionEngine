@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { CaptainIdentityBar } from '../components/CaptainIdentityBar';
 import { MySquadPanel } from '../components/MySquadPanel';
@@ -57,6 +57,12 @@ export function AuctionPage() {
       theme="captain"
     >
       {me && <CaptainIdentityBar captain={me} />}
+
+      <p className="players-nav">
+        <Link to={`/room/${roomId}/players`} className="btn-link">
+          Browse / Shortlist Players
+        </Link>
+      </p>
 
       <LiveAuctionPanel
         roomId={roomId}
