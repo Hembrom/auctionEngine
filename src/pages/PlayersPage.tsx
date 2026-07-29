@@ -5,7 +5,7 @@ import { BrowsePlayerCard } from '../components/BrowsePlayerCard';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
-import { getCaptainId, isSpectator } from '../hooks/useSession';
+import { getAdminId, getCaptainId, isSpectator } from '../hooks/useSession';
 import {
   toggleCaptainShortlist,
   setCaptainPlayerTags,
@@ -29,6 +29,7 @@ export function PlayersPage() {
   const { state, captains, players, loading, firebaseError } = useAuctionData(roomId);
   const captainId = getCaptainId(roomId);
   const spectating = isSpectator(roomId);
+  const isAdmin = !!getAdminId(roomId) && state.adminId === getAdminId(roomId);
   const me = captains.find((c) => c.id === captainId);
   const canShortlist = !!me && me.status === 'approved';
 
@@ -132,13 +133,17 @@ export function PlayersPage() {
       subtitle={state.displayName || roomId}
       badge={`${filtered.length}/${players.length}`}
       captainName={me ? `${me.name} (${me.teamName})` : undefined}
-      theme={canShortlist ? 'captain' : spectating ? 'spectator' : undefined}
+      theme={canShortlist ? 'captain' : isAdmin ? 'admin' : spectating ? 'spectator' : undefined}
     >
       <FirebaseBanner />
       <FirebaseErrorBanner error={firebaseError} />
 
       <div className="players-nav">
-        {spectating ? (
+        {isAdmin ? (
+          <Link to={`/room/${roomId}/admin`} className="btn-link">
+            ← Admin
+          </Link>
+        ) : spectating ? (
           <Link to={`/room/${roomId}/spectate`} className="btn-link">
             ← Spectator
           </Link>
@@ -149,10 +154,16 @@ export function PlayersPage() {
         )}
         {(state.phase === 'live' || state.phase === 'result' || state.phase === 'unsold') && (
           <Link
-            to={spectating ? `/room/${roomId}/spectate` : `/room/${roomId}/auction`}
+            to={
+              isAdmin
+                ? `/room/${roomId}/admin`
+                : spectating
+                  ? `/room/${roomId}/spectate`
+                  : `/room/${roomId}/auction`
+            }
             className="btn-link"
           >
-            Live Auction
+            {isAdmin ? 'Admin Panel' : 'Live Auction'}
           </Link>
         )}
       </div>
@@ -160,12 +171,14 @@ export function PlayersPage() {
       {!loading && (
         <p className="muted players-hint">
           {canShortlist
-            ? 'Your shortlist and marks are private to you. Marking a player also adds them to your shortlist.'
-            : spectating
-              ? 'Same player ratings as captains — watch only (no shortlist or marks).'
-              : me?.status === 'pending'
-                ? 'Waiting for admin approval — you can browse ratings now; shortlisting unlocks after approval.'
-                : 'Browse player ratings. Join as an approved captain to shortlist and mark players.'}
+            ? 'Filter by Available / Sold in Status. Shortlist and marks are private to you.'
+            : isAdmin
+              ? 'Browse and filter all players by position, rating, and Available / Sold status.'
+              : spectating
+                ? 'Same ratings as captains. Use Status to filter Available / Sold (no shortlist).'
+                : me?.status === 'pending'
+                  ? 'Browse ratings now; shortlisting unlocks after approval. Filter Available / Sold via Status.'
+                  : 'Browse player ratings and filter Available / Sold. Join as captain to shortlist.'}
         </p>
       )}
 

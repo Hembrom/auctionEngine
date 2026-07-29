@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { CollapsibleSection } from '../components/CollapsibleSection';
 import { AuctionDashboardSections } from '../components/AuctionDashboardSections';
@@ -253,6 +253,12 @@ export function AdminPage() {
       )}
 
       <ShareRoomLinks roomId={roomId} />
+
+      <p className="players-nav">
+        <Link to={`/room/${roomId}/players`} className="btn-link">
+          Browse Players (ratings / available / sold)
+        </Link>
+      </p>
 
       <AuctionDashboardSections
         roomId={roomId}

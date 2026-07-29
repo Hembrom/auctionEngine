@@ -3,8 +3,6 @@ import type { AuctionState, Bid, Captain, Player } from '../types';
 import { getOverallRating } from '../lib/playerUtils';
 import { CollapsibleSection } from './CollapsibleSection';
 import { LiveAuctionPanel } from './LiveAuctionPanel';
-import { PlayerStatusBoard } from './PlayerStatusBoard';
-import { PlayersLeftPanel } from './PlayersLeftPanel';
 import { CaptainDashboard } from './CaptainDashboard';
 import { SpectatorBanner } from './SpectatorBanner';
 import { BrowsePlayerCard } from './BrowsePlayerCard';
@@ -44,7 +42,7 @@ export function SpectatorDashboardSections({
     <div className="watch-sections">
       <p className="players-nav">
         <Link to={`/room/${roomId}/players`} className="btn-link">
-          Browse / Filter Players
+          Browse Players (available / sold)
         </Link>
       </p>
 
@@ -65,32 +63,19 @@ export function SpectatorDashboardSections({
         <CollapsibleSection title="Watch Mode" badge={state.phase.toUpperCase()} defaultOpen>
           <SpectatorBanner />
           <p className="muted" style={{ marginTop: '0.75rem' }}>
-            Auction has not started yet. Full ratings are shown below (same as captains, without
-            shortlist marks).
+            Auction has not started yet. Browse player ratings below, or open Browse Players to
+            filter by available / sold.
           </p>
         </CollapsibleSection>
       )}
 
-      {isPreAuction && players.length > 0 && (
-        <CollapsibleSection title={`All Players (${players.length})`} defaultOpen>
+      {players.length > 0 && (isPreAuction || isLivePhase) && (
+        <CollapsibleSection
+          title={`All Players with Ratings (${players.length})`}
+          defaultOpen={isPreAuction}
+        >
           <RatedPlayersGrid players={players} />
         </CollapsibleSection>
-      )}
-
-      {isLivePhase && players.length > 0 && (
-        <>
-          <CollapsibleSection title="Player Pipeline" defaultOpen>
-            <PlayerStatusBoard state={state} players={players} captains={captains} />
-          </CollapsibleSection>
-
-          <CollapsibleSection title="Players Left" defaultOpen>
-            <PlayersLeftPanel players={players} />
-          </CollapsibleSection>
-
-          <CollapsibleSection title={`All Players with Ratings (${players.length})`} defaultOpen={false}>
-            <RatedPlayersGrid players={players} />
-          </CollapsibleSection>
-        </>
       )}
 
       {approved.length > 0 && (

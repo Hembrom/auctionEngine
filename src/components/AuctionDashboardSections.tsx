@@ -3,6 +3,7 @@ import type { AuctionState, Bid, Captain, Player } from '../types';
 import { CollapsibleSection } from './CollapsibleSection';
 import { LiveAuctionPanel } from './LiveAuctionPanel';
 import { PlayerStatusBoard } from './PlayerStatusBoard';
+import { PlayersLeftPanel } from './PlayersLeftPanel';
 import { CaptainDashboard } from './CaptainDashboard';
 import { SpectatorBanner } from './SpectatorBanner';
 
@@ -53,9 +54,14 @@ export function AuctionDashboardSections({
       </CollapsibleSection>
 
       {showPlayerPipeline && players.length > 0 && (
-        <CollapsibleSection title="Player Pipeline" defaultOpen={isLivePhase}>
-          <PlayerStatusBoard state={state} players={players} captains={captains} />
-        </CollapsibleSection>
+        <>
+          <CollapsibleSection title="Player Pipeline" defaultOpen={isLivePhase}>
+            <PlayerStatusBoard state={state} players={players} captains={captains} />
+          </CollapsibleSection>
+          <CollapsibleSection title="Players Left" defaultOpen={isLivePhase}>
+            <PlayersLeftPanel players={players} />
+          </CollapsibleSection>
+        </>
       )}
 
       {approved.length > 0 && (

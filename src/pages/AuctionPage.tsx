@@ -4,8 +4,6 @@ import { Layout } from '../components/Layout';
 import { CaptainIdentityBar } from '../components/CaptainIdentityBar';
 import { MySquadPanel } from '../components/MySquadPanel';
 import { LiveAuctionPanel } from '../components/LiveAuctionPanel';
-import { CollapsibleSection } from '../components/CollapsibleSection';
-import { PlayersLeftPanel } from '../components/PlayersLeftPanel';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
@@ -19,7 +17,6 @@ export function AuctionPage() {
   const captainId = getCaptainId(roomId);
   const spectating = isSpectator(roomId);
   const me = captains.find((c) => c.id === captainId);
-  const isLivePhase = ['live', 'result', 'unsold'].includes(state.phase);
 
   useAuctionEngine(roomId, state, players, captains);
 
@@ -60,7 +57,7 @@ export function AuctionPage() {
 
       <p className="players-nav">
         <Link to={`/room/${roomId}/players`} className="btn-link">
-          Browse / Shortlist Players
+          Browse Players (available / sold)
         </Link>
       </p>
 
@@ -73,14 +70,6 @@ export function AuctionPage() {
         captainId={captainId}
         showBidPanel
       />
-
-      {players.length > 0 && isLivePhase && (
-        <div className="watch-sections">
-          <CollapsibleSection title="Players Left" defaultOpen>
-            <PlayersLeftPanel players={players} />
-          </CollapsibleSection>
-        </div>
-      )}
 
       {me && <MySquadPanel captain={me} />}
     </Layout>
