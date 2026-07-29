@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import type { AuctionState, Bid, Captain, Player } from '../types';
+import { getOverallRating } from '../lib/playerUtils';
 import { CollapsibleSection } from './CollapsibleSection';
 import { LiveAuctionPanel } from './LiveAuctionPanel';
 import { PlayerStatusBoard } from './PlayerStatusBoard';
 import { PlayersLeftPanel } from './PlayersLeftPanel';
 import { CaptainDashboard } from './CaptainDashboard';
 import { SpectatorBanner } from './SpectatorBanner';
+import { BrowsePlayerCard } from './BrowsePlayerCard';
 
 interface SpectatorDashboardSectionsProps {
   roomId: string;
@@ -15,37 +17,15 @@ interface SpectatorDashboardSectionsProps {
   captains: Captain[];
 }
 
-function PreAuctionPlayersList({ players }: { players: Player[] }) {
-  const sorted = [...players].sort((a, b) => a.name.localeCompare(b.name));
+function RatedPlayersGrid({ players }: { players: Player[] }) {
+  const sorted = [...players].sort((a, b) => getOverallRating(b) - getOverallRating(a));
 
   return (
-    <section className="card admin-wide players-left-panel">
-      <div className="player-board-header">
-        <h3>All Players</h3>
-        <div className="player-board-summary">
-          <span className="player-board-pill muted">{players.length} total</span>
-        </div>
-      </div>
-      <p className="muted player-board-hint">Full room roster before the auction starts.</p>
-      {sorted.length === 0 ? (
-        <p className="muted player-board-empty">No players added yet</p>
-      ) : (
-        <ul className="players-left-list">
-          {sorted.map((p) => (
-            <li key={p.id}>
-              <span className="players-left-name">{p.name}</span>
-              <span className="player-board-positions">
-                {p.positions.map((pos) => (
-                  <span key={pos} className={`pos-tag pos-${pos.toLowerCase()}`}>
-                    {pos}
-                  </span>
-                ))}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <div className="players-browse-grid">
+      {sorted.map((player) => (
+        <BrowsePlayerCard key={player.id} player={player} />
+      ))}
+    </div>
   );
 }
 
@@ -64,7 +44,7 @@ export function SpectatorDashboardSections({
     <div className="watch-sections">
       <p className="players-nav">
         <Link to={`/room/${roomId}/players`} className="btn-link">
-          Browse All Players
+          Browse / Filter Players
         </Link>
       </p>
 
@@ -85,15 +65,15 @@ export function SpectatorDashboardSections({
         <CollapsibleSection title="Watch Mode" badge={state.phase.toUpperCase()} defaultOpen>
           <SpectatorBanner />
           <p className="muted" style={{ marginTop: '0.75rem' }}>
-            Auction has not started yet. You can browse the full player list and follow captain
-            squads below.
+            Auction has not started yet. Full ratings are shown below (same as captains, without
+            shortlist marks).
           </p>
         </CollapsibleSection>
       )}
 
       {isPreAuction && players.length > 0 && (
-        <CollapsibleSection title="All Players" defaultOpen>
-          <PreAuctionPlayersList players={players} />
+        <CollapsibleSection title={`All Players (${players.length})`} defaultOpen>
+          <RatedPlayersGrid players={players} />
         </CollapsibleSection>
       )}
 
@@ -105,6 +85,10 @@ export function SpectatorDashboardSections({
 
           <CollapsibleSection title="Players Left" defaultOpen>
             <PlayersLeftPanel players={players} />
+          </CollapsibleSection>
+
+          <CollapsibleSection title={`All Players with Ratings (${players.length})`} defaultOpen={false}>
+            <RatedPlayersGrid players={players} />
           </CollapsibleSection>
         </>
       )}

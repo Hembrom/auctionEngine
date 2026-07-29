@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
+import { BrowsePlayerCard } from '../components/BrowsePlayerCard';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
@@ -13,12 +14,9 @@ import {
   getOverallRating,
   PLAYER_MARKS,
   PLAYER_MARK_LABELS,
-  PLAYER_SKILL_LABELS,
-  PLAYER_SKILLS,
-  getPlayerSkillValue,
   togglePlayerMarkTags,
 } from '../lib/playerUtils';
-import type { Player, PlayerMark, Position } from '../types';
+import type { PlayerMark, Position } from '../types';
 import { POSITION_ORDER } from '../types';
 
 const ALL_POSITIONS: Position[] = ['GK', 'DEF', 'MID', 'ST'];
@@ -140,32 +138,34 @@ export function PlayersPage() {
       <FirebaseErrorBanner error={firebaseError} />
 
       <div className="players-nav">
-        <Link to={`/room/${roomId}/lobby`} className="btn-link">
-          ← Lobby
-        </Link>
-        {(state.phase === 'live' || state.phase === 'result' || state.phase === 'unsold') && (
-          <Link to={`/room/${roomId}/auction`} className="btn-link">
-            Live Auction
+        {spectating ? (
+          <Link to={`/room/${roomId}/spectate`} className="btn-link">
+            ← Spectator
+          </Link>
+        ) : (
+          <Link to={`/room/${roomId}/lobby`} className="btn-link">
+            ← Lobby
           </Link>
         )}
-        {spectating && (
-          <Link to={`/room/${roomId}/spectate`} className="btn-link">
-            Spectator
+        {(state.phase === 'live' || state.phase === 'result' || state.phase === 'unsold') && (
+          <Link
+            to={spectating ? `/room/${roomId}/spectate` : `/room/${roomId}/auction`}
+            className="btn-link"
+          >
+            Live Auction
           </Link>
         )}
       </div>
 
-      {!canShortlist && !loading && (
+      {!loading && (
         <p className="muted players-hint">
-          {me?.status === 'pending'
-            ? 'Waiting for admin approval — you can browse players, but shortlisting unlocks after approval.'
-            : 'Browse and filter players. Join as an approved captain to shortlist and mark players (5★, Local, etc.).'}
-        </p>
-      )}
-
-      {canShortlist && (
-        <p className="muted players-hint">
-          Your shortlist and marks are private to you. Marking a player also adds them to your shortlist.
+          {canShortlist
+            ? 'Your shortlist and marks are private to you. Marking a player also adds them to your shortlist.'
+            : spectating
+              ? 'Same player ratings as captains — watch only (no shortlist or marks).'
+              : me?.status === 'pending'
+                ? 'Waiting for admin approval — you can browse ratings now; shortlisting unlocks after approval.'
+                : 'Browse player ratings. Join as an approved captain to shortlist and mark players.'}
         </p>
       )}
 
@@ -290,95 +290,5 @@ export function PlayersPage() {
         </div>
       )}
     </Layout>
-  );
-}
-
-function BrowsePlayerCard({
-  player,
-  canShortlist,
-  shortlisted,
-  tags,
-  busy,
-  onToggleShortlist,
-  onToggleMark,
-}: {
-  player: Player;
-  canShortlist: boolean;
-  shortlisted: boolean;
-  tags: PlayerMark[];
-  busy: boolean;
-  onToggleShortlist: () => void;
-  onToggleMark: (mark: PlayerMark) => void;
-}) {
-  const overall = getOverallRating(player);
-
-  return (
-    <article className={`card browse-player-card ${shortlisted ? 'browse-player-shortlisted' : ''}`}>
-      <div className="browse-player-top">
-        <div>
-          <h3>{player.name}</h3>
-          <div className="position-tags">
-            {player.positions.map((p) => (
-              <span key={p} className={`pos-tag pos-${p.toLowerCase()}`}>
-                {p}
-              </span>
-            ))}
-            <span className={`status-pill status-${player.status}`}>{player.status}</span>
-          </div>
-        </div>
-        <div className="browse-overall">
-          <span className="browse-overall-value">{overall}</span>
-          <span className="muted">Overall</span>
-        </div>
-      </div>
-
-      <div className="browse-skills">
-        {PLAYER_SKILLS.map((skill) => (
-          <div key={skill} className="browse-skill">
-            <span>{PLAYER_SKILL_LABELS[skill]}</span>
-            <strong>{getPlayerSkillValue(player, skill)}</strong>
-          </div>
-        ))}
-      </div>
-
-      {canShortlist && (
-        <div className="browse-actions">
-          <button
-            type="button"
-            className={shortlisted ? 'btn-success' : undefined}
-            disabled={busy}
-            onClick={onToggleShortlist}
-          >
-            {shortlisted ? '★ Shortlisted' : '☆ Shortlist'}
-          </button>
-          <div className="browse-marks">
-            {PLAYER_MARKS.map((mark) => {
-              const active = tags.includes(mark);
-              return (
-                <button
-                  key={mark}
-                  type="button"
-                  className={`mark-chip ${active ? 'mark-chip-active' : ''}`}
-                  disabled={busy}
-                  onClick={() => onToggleMark(mark)}
-                >
-                  {PLAYER_MARK_LABELS[mark]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {!canShortlist && tags.length > 0 && (
-        <div className="browse-marks">
-          {tags.map((mark) => (
-            <span key={mark} className="mark-chip mark-chip-active">
-              {PLAYER_MARK_LABELS[mark]}
-            </span>
-          ))}
-        </div>
-      )}
-    </article>
   );
 }
