@@ -7,6 +7,7 @@ import { getCaptainId, isSpectator } from '../hooks/useSession';
 import { CaptainIdentityBar } from '../components/CaptainIdentityBar';
 import { MySquadPanel } from '../components/MySquadPanel';
 import { SpectatorBanner } from '../components/SpectatorBanner';
+import { CaptainDashboard } from '../components/CaptainDashboard';
 import { setTeamName } from '../lib/auctionService';
 
 export function LobbyPage() {
@@ -69,6 +70,12 @@ export function LobbyPage() {
           Browse Players
         </Link>
       </p>
+
+      {spectating && approved.length > 0 && (
+        <div className="watch-sections" style={{ marginBottom: '1rem' }}>
+          <CaptainDashboard captains={captains} title="All Captain Squads" />
+        </div>
+      )}
 
       <div className={spectating ? 'grid-1' : 'grid-2'}>
         {!spectating && (
