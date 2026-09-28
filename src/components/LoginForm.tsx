@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 interface LoginFormProps {
   title: string;
   subtitle?: string;
+  role?: 'admin' | 'captain';
   onSuccess?: () => void;
 }
 
-export function LoginForm({ title, subtitle, onSuccess }: LoginFormProps) {
+export function LoginForm({ title, subtitle, role, onSuccess }: LoginFormProps) {
   const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -35,7 +36,7 @@ export function LoginForm({ title, subtitle, onSuccess }: LoginFormProps) {
   };
 
   return (
-    <div className="card auth-card">
+    <div className={`card auth-card${role ? ` auth-card-${role}` : ''}`}>
       <h3>{title}</h3>
       {subtitle && <p className="muted auth-subtitle">{subtitle}</p>}
       <form onSubmit={handleSubmit} className="join-form auth-form">
@@ -78,9 +79,6 @@ export function LoginForm({ title, subtitle, onSuccess }: LoginFormProps) {
             </button>
           </>
         )}
-      </p>
-      <p className="muted auth-hint">
-        Enable Email/Password sign-in in Firebase Console → Authentication if login fails.
       </p>
     </div>
   );

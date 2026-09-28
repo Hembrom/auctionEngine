@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { HomePage, RoomGuard } from './pages/HomePage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import { CaptainLoginPage } from './pages/CaptainLoginPage';
 import { JoinPage } from './pages/JoinPage';
 import { WaitingPage } from './pages/WaitingPage';
 import { LobbyPage } from './pages/LobbyPage';
@@ -22,7 +24,16 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/login/admin" element={<AdminLoginPage />} />
 
+        <Route
+          path="/room/:roomId/login"
+          element={
+            <RoomRoute>
+              <CaptainLoginPage />
+            </RoomRoute>
+          }
+        />
         <Route
           path="/room/:roomId"
           element={

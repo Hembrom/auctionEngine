@@ -1,32 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { createRoom, roomExists, getRoom } from '../lib/auctionService';
 import { slugifyRoomName, isValidRoomSlug, pathForAuctionPhase } from '../lib/roomUtils';
-import { setAdminId, setSpectator, setCaptainId } from '../hooks/useSession';
-import { findCaptainByAuthUid } from '../lib/auctionService';
-import { pathForCaptainInRoom } from '../lib/captainRouting';
+import { setAdminId, setSpectator } from '../hooks/useSession';
 import { useAuth } from '../context/AuthContext';
-import { LoginForm } from '../components/LoginForm';
 import { AuthUserBar } from '../components/AuthUserBar';
 
 export function HomePage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [createName, setCreateName] = useState('');
-  const [joinName, setJoinName] = useState('');
+  const [watchName, setWatchName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const createSlug = slugifyRoomName(createName);
-  const joinSlug = slugifyRoomName(joinName);
+  const watchSlug = slugifyRoomName(watchName);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createName.trim()) return;
     if (!user) {
-      setError('Sign in to create a room as admin.');
+      navigate(`/login/admin?next=${encodeURIComponent('/')}`);
       return;
     }
     setLoading(true);
@@ -42,45 +39,9 @@ export function HomePage() {
     }
   };
 
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!joinName.trim()) return;
-    if (!user) {
-      setError('Sign in to join as a captain.');
-      return;
-    }
-    const roomId = slugifyRoomName(joinName);
-    if (!isValidRoomSlug(roomId)) {
-      setError('Enter a valid room name (at least 3 characters).');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      const exists = await roomExists(roomId);
-      if (!exists) {
-        setError(`Room "${roomId}" not found. Check the name with your admin.`);
-        return;
-      }
-      const existing = await findCaptainByAuthUid(roomId, user.uid);
-      if (existing && existing.status !== 'rejected') {
-        setCaptainId(roomId, existing.id);
-        const room = await getRoom(roomId);
-        const phase = room?.phase ?? 'waiting';
-        navigate(pathForCaptainInRoom(roomId, phase, existing));
-        return;
-      }
-      navigate(`/room/${roomId}`);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSpectate = async () => {
-    if (!joinName.trim()) return;
-    const roomId = slugifyRoomName(joinName);
+    if (!watchName.trim()) return;
+    const roomId = slugifyRoomName(watchName);
     if (!isValidRoomSlug(roomId)) {
       setError('Enter a valid room name (at least 3 characters).');
       return;
@@ -104,7 +65,7 @@ export function HomePage() {
   };
 
   return (
-    <Layout title="Football Auction" subtitle="Create or join a room">
+    <Layout title="Football Auction" subtitle="Create or watch an auction">
       <FirebaseBanner />
       <FirebaseErrorBanner error={error.includes('Firestore') ? error : null} />
       <AuthUserBar />
@@ -112,64 +73,57 @@ export function HomePage() {
       <div className="grid-2">
         <div className="card">
           <h3>Create Room (Admin)</h3>
-          <p className="muted">
-            Start a new auction. Sign in with email — your account owns the room.
-          </p>
+          <p className="muted">Start a new auction. Your account owns the room.</p>
           {!authLoading && !user ? (
-            <LoginForm
-              title="Admin sign in"
-              subtitle="Create an account or sign in, then create your room below."
-            />
+            <div className="home-auth-cta">
+              <Link to="/login/admin" className="btn-primary home-auth-link">
+                Admin sign in
+              </Link>
+              <p className="muted">Sign in or create an admin account, then create your room.</p>
+            </div>
           ) : (
-          <form onSubmit={handleCreate} className="join-form">
-            <label htmlFor="create">Room Name</label>
-            <input
-              id="create"
-              placeholder="e.g. Friday Night Auction"
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-            />
-            {createSlug && <p className="muted">URL: /room/{createSlug}</p>}
-            <button type="submit" disabled={loading || !createName.trim() || !user}>
-              {loading ? 'Creating...' : 'Create & Open Admin'}
-            </button>
-          </form>
+            <form onSubmit={handleCreate} className="join-form">
+              <label htmlFor="create">Room Name</label>
+              <input
+                id="create"
+                placeholder="e.g. Friday Night Auction"
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
+              />
+              {createSlug && <p className="muted">URL: /room/{createSlug}</p>}
+              <button type="submit" disabled={loading || !createName.trim() || !user}>
+                {loading ? 'Creating...' : 'Create & Open Admin'}
+              </button>
+            </form>
           )}
         </div>
 
         <div className="card">
-          <h3>Join Room (Captain)</h3>
-          <p className="muted">
-            Sign in with email — your account stays linked to your team in each room.
-          </p>
-          {!authLoading && !user ? (
-            <LoginForm
-              title="Captain sign in"
-              subtitle="Create an account or sign in, then enter your room name below."
-            />
-          ) : (
-          <form onSubmit={handleJoin} className="join-form">
-            <label htmlFor="join">Room Name</label>
+          <h3>Watch as Spectator</h3>
+          <p className="muted">Enter the room name your admin shared with you.</p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSpectate();
+            }}
+            className="join-form"
+          >
+            <label htmlFor="watch">Room Name</label>
             <input
-              id="join"
+              id="watch"
               placeholder="e.g. friday-night-auction"
-              value={joinName}
-              onChange={(e) => setJoinName(e.target.value)}
+              value={watchName}
+              onChange={(e) => setWatchName(e.target.value)}
             />
-            {joinSlug && <p className="muted">Room ID: {joinSlug}</p>}
-            <button type="submit" disabled={loading || !joinName.trim() || !user}>
-              {loading ? 'Joining...' : 'Join as Captain'}
-            </button>
-            <button
-              type="button"
-              className="btn-link spectator-join-btn"
-              disabled={loading || !joinName.trim()}
-              onClick={handleSpectate}
-            >
-              Watch as Spectator
+            {watchSlug && <p className="muted">Room ID: {watchSlug}</p>}
+            <button type="submit" disabled={loading || !watchName.trim()}>
+              {loading ? 'Opening…' : 'Watch Live'}
             </button>
           </form>
-          )}
+          <p className="muted home-captain-note">
+            Captains: use the <strong>room link</strong> from your admin (e.g. /room/your-room-name) to
+            sign in and join — not from this page.
+          </p>
         </div>
       </div>
 
@@ -206,7 +160,9 @@ export function RoomGuard({
   if (status === 'loading') {
     return (
       <Layout title="Loading...">
-        <div className="card center-card"><p>Loading room...</p></div>
+        <div className="card center-card">
+          <p>Loading room...</p>
+        </div>
       </Layout>
     );
   }

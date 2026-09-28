@@ -9,29 +9,17 @@ import {
 } from '../types';
 import { clampRating } from './playerUtils';
 
-export function hasGoalkeeper(captain: Captain): boolean {
-  return captain.squad.some((p) => p.position === 'GK');
-}
-
 export function getRemainingPlayerCount(captain: Captain): number {
   return SQUAD_SIZE - captain.squad.length;
 }
 
-/** Outfield slots still fillable (DEF/MID/ST — any mix). */
-export function getOutfieldSlotsRemaining(captain: Captain): number {
-  const remaining = getRemainingPlayerCount(captain);
-  if (remaining <= 0) return 0;
-  return hasGoalkeeper(captain) ? remaining : Math.max(0, remaining - 1);
-}
-
 export function getRemainingSlots(captain: Captain): Record<Position, number> {
   const remaining = getRemainingPlayerCount(captain);
-  const outfield = getOutfieldSlotsRemaining(captain);
   return {
-    GK: !hasGoalkeeper(captain) && remaining > 0 ? 1 : 0,
-    DEF: outfield,
-    MID: outfield,
-    ST: outfield,
+    GK: remaining,
+    DEF: remaining,
+    MID: remaining,
+    ST: remaining,
   };
 }
 
@@ -40,10 +28,8 @@ export function getAvailableBudget(captain: Captain): number {
   return captain.budget - remaining * STARTING_BID;
 }
 
-export function canBidOnPosition(captain: Captain, position: Position): boolean {
-  if (captain.squad.length >= SQUAD_SIZE) return false;
-  if (position === 'GK') return !hasGoalkeeper(captain);
-  return getOutfieldSlotsRemaining(captain) > 0;
+export function canBidOnPosition(captain: Captain, _position: Position): boolean {
+  return captain.squad.length < SQUAD_SIZE;
 }
 
 export function formatSoldMessage(playerName: string, teamName: string, amount: number): string {
@@ -61,12 +47,9 @@ export function isEligibleToBid(
   }
 
   const playerPositions = player.positions;
-  const hasSlot = playerPositions.some((pos) => canBidOnPosition(captain, pos));
-  if (!hasSlot) {
-    if (!hasGoalkeeper(captain) && getRemainingPlayerCount(captain) === 1) {
-      return { eligible: false, reason: 'Must buy a GK for your last slot' };
-    }
-    return { eligible: false, reason: 'No open slot for this position' };
+  const hasRoom = captain.squad.length < SQUAD_SIZE;
+  if (!hasRoom || playerPositions.length === 0) {
+    return { eligible: false, reason: 'No open slot for this player' };
   }
 
   const minBid = currentHighBid === 0 ? STARTING_BID : currentHighBid + 1;
@@ -83,28 +66,17 @@ export function isEligibleToBid(
 }
 
 export function getPrimaryPosition(player: Player): Position {
-  return player.positions[0];
+  return POSITION_ORDER.find((pos) => player.positions.includes(pos)) ?? player.positions[0];
 }
 
-export function assignPosition(captain: Captain, player: Player): Position {
-  if (player.positions.includes('GK') && canBidOnPosition(captain, 'GK')) {
-    return 'GK';
-  }
-  for (const pos of player.positions) {
-    if (pos !== 'GK' && canBidOnPosition(captain, pos)) return pos;
-  }
-  return player.positions.find((p) => p !== 'GK') ?? player.positions[0];
+export function assignPosition(_captain: Captain, player: Player): Position {
+  return getPrimaryPosition(player);
 }
 
 export function formatRemainingSlots(captain: Captain): string {
   const remaining = getRemainingPlayerCount(captain);
   if (remaining <= 0) return 'Full';
-
-  const parts: string[] = [];
-  if (!hasGoalkeeper(captain)) parts.push('GK 1');
-  const outfield = getOutfieldSlotsRemaining(captain);
-  if (outfield > 0) parts.push(`${outfield} outfield`);
-  return parts.join(', ');
+  return remaining === 1 ? '1 slot' : `${remaining} slots`;
 }
 
 export function getUnsoldPlayers(players: Player[]): Player[] {
@@ -190,12 +162,23 @@ export function buildPlayerQueue(players: Player[], unsoldOnly = false): string[
     unsoldOnly ? p.status === 'unsold' : p.status === 'available',
   );
 
+  const byPosition: Record<Position, Player[]> = {
+    GK: [],
+    DEF: [],
+    MID: [],
+    ST: [],
+  };
+
+  for (const player of filtered) {
+    const bucket =
+      POSITION_ORDER.find((pos) => player.positions.includes(pos)) ?? player.positions[0];
+    if (bucket) byPosition[bucket].push(player);
+  }
+
   const queue: string[] = [];
   for (const position of POSITION_ORDER) {
-    const group = filtered.filter((p) => p.positions.includes(position));
-    const shuffled = shuffleArray(group);
-    for (const p of shuffled) {
-      if (!queue.includes(p.id)) queue.push(p.id);
+    for (const p of shuffleArray(byPosition[position])) {
+      queue.push(p.id);
     }
   }
   return queue;

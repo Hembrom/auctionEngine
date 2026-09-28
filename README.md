@@ -14,11 +14,12 @@ Real-time, multi-device web app for conducting an internal company football play
 
 1. Create a project at [Firebase Console](https://console.firebase.google.com)
 2. Enable **Firestore Database** (start in test mode for development)
-3. Register a **Web app** and copy the config values
-4. Deploy security rules and indexes:
+3. Enable **Storage** (Build → Storage → Get started; use the default bucket)
+4. Register a **Web app** and copy the config values
+5. Deploy security rules and indexes:
 
 ```bash
-firebase deploy --only firestore
+firebase deploy --only firestore,storage
 ```
 
 Firestore needs a composite index on `bids` (`playerId` + `timestamp`). The Firebase console will prompt you with a link on first use, or deploy `firestore.indexes.json` via the CLI above.
@@ -79,6 +80,10 @@ Room IDs are auto-generated from the name: `Friday Night Auction` → `friday-ni
 
 Each room has its own captains, players, bids, and auction state in Firestore under `rooms/{roomId}/`.
 
+## Player photos (admin)
+
+After players are in the pool, open **Admin Panel → Room Setup → Player photos**. For each player, choose **Upload** (JPEG, PNG, or WebP, max 5 MB). The image is stored in Firebase Storage and shown on the live auction card and **Browse Players**. You can **Replace** or **Remove** anytime while signed in as the room admin.
+
 ## CSV Format
 
 ```csv
@@ -92,12 +97,11 @@ Mike Jones,DEF/MID,3,4,4,3
 | Rule | Detail |
 |------|--------|
 | Squad size | 7 players |
-| Goalkeeper | Exactly 1 GK required |
-| Outfield | Remaining 6 slots — any mix of DEF, MID, or ST |
+| Positions | Any mix — no required GK; captains can pick any available player while slots remain |
 
 - Starting budget: ₹1000 per captain
 - Available budget = Remaining budget − (remaining players × ₹10)
-- Auction order: GK → ST → DEF → MID (random within each group)
+- Auction order: GK → DEF → MID → ST (random order within each group)
 
 ## Admin Controls
 

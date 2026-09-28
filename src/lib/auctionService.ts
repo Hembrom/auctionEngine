@@ -12,7 +12,12 @@ import {
   where,
   getDocs,
   writeBatch,
+  deleteField,
 } from 'firebase/firestore';
+import {
+  deletePlayerPhotoFile,
+  uploadPlayerPhoto,
+} from './playerImageStorage';
 import { db, COLLECTIONS, SUBCOLLECTIONS } from '../firebase';
 import type {
   AuctionState,
@@ -306,7 +311,18 @@ export async function addPlayersBatch(roomId: string, playersData: PlayerFormDat
 }
 
 export async function deletePlayer(roomId: string, playerId: string) {
+  await deletePlayerPhotoFile(roomId, playerId);
   await deleteDoc(doc(roomPaths(roomId).players, playerId));
+}
+
+export async function setPlayerPhoto(roomId: string, playerId: string, file: File) {
+  const imageUrl = await uploadPlayerPhoto(roomId, playerId, file);
+  await updateDoc(doc(roomPaths(roomId).players, playerId), { imageUrl });
+}
+
+export async function clearPlayerPhoto(roomId: string, playerId: string) {
+  await deletePlayerPhotoFile(roomId, playerId);
+  await updateDoc(doc(roomPaths(roomId).players, playerId), { imageUrl: deleteField() });
 }
 
 export async function moveToLobby(roomId: string, startingBudget: number) {

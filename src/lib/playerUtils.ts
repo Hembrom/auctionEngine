@@ -85,6 +85,7 @@ export function normalizePlayer(
       physical: clampRating(raw.physical ?? 5),
       pace: clampRating(raw.pace ?? 5),
       stamina: clampRating(raw.stamina ?? 5),
+      imageUrl: raw.imageUrl?.trim() || undefined,
       soldToCaptainId: raw.soldToCaptainId,
       soldPrice: raw.soldPrice,
     };
@@ -105,6 +106,7 @@ export function normalizePlayer(
     physical: scaleLegacyToTen(raw.fitness, base),
     pace: scaleLegacyToTen(raw.lastMatchRating, base),
     stamina: scaleLegacyToTen(raw.fitness, base),
+    imageUrl: raw.imageUrl?.trim() || undefined,
     soldToCaptainId: raw.soldToCaptainId,
     soldPrice: raw.soldPrice,
   };

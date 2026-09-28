@@ -1,4 +1,5 @@
 import type { Player, PlayerMark } from '../types';
+import { PlayerPhoto } from './PlayerPhoto';
 import {
   getOverallRating,
   PLAYER_MARKS,
@@ -31,6 +32,7 @@ export function BrowsePlayerCard({
 
   return (
     <article className={`card browse-player-card ${shortlisted ? 'browse-player-shortlisted' : ''}`}>
+      <PlayerPhoto player={player} size="sm" className="browse-player-photo" />
       <div className="browse-player-top">
         <div>
           <h3>{player.name}</h3>

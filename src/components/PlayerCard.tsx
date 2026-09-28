@@ -1,4 +1,5 @@
 import type { Player } from '../types';
+import { PlayerPhoto } from './PlayerPhoto';
 import {
   PLAYER_SKILLS,
   PLAYER_SKILL_LABELS,
@@ -26,6 +27,7 @@ function SkillBar({ label, value, max = RATING_MAX }: { label: string; value: nu
 export function PlayerCard({ player, large }: PlayerCardProps) {
   return (
     <div className={`player-card ${large ? 'player-card-lg' : ''}`}>
+      <PlayerPhoto player={player} size={large ? 'lg' : 'md'} />
       <div className="player-header">
         <h2>{player.name}</h2>
         <div className="position-tags">

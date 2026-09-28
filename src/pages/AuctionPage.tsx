@@ -4,13 +4,13 @@ import { Layout } from '../components/Layout';
 import { CaptainIdentityBar } from '../components/CaptainIdentityBar';
 import { MySquadPanel } from '../components/MySquadPanel';
 import { LiveAuctionPanel } from '../components/LiveAuctionPanel';
-import { RequireAuth } from '../components/RequireAuth';
 import { AuthUserBar } from '../components/AuthUserBar';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
 import { isSpectator } from '../hooks/useSession';
 import { useCaptainSession } from '../hooks/useCaptainSession';
+import { useRequireCaptainLogin } from '../hooks/useRequireCaptainLogin';
 import { useAuth } from '../context/AuthContext';
 import { captainMatchesUser } from '../lib/captainAccess';
 import { pathForAuctionPhase } from '../lib/roomUtils';
@@ -19,14 +19,15 @@ function AuctionPageCaptain() {
   const roomId = useRoomId();
   const { state, captains, players, bids, loading } = useAuctionData(roomId);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authGateLoading } = useRequireCaptainLogin(roomId);
+  const { user: authedUser } = useAuth();
   const { authLoading, captainId } = useCaptainSession(roomId);
   const me = captains.find((c) => c.id === captainId);
 
   useAuctionEngine(roomId, state, players, captains);
 
   useEffect(() => {
-    if (loading || authLoading) return;
+    if (loading || authLoading || authGateLoading) return;
 
     if (!captainId) {
       navigate(`/room/${roomId}`, { replace: true });
@@ -38,9 +39,13 @@ function AuctionPageCaptain() {
       return;
     }
     if (state.phase === 'ended') navigate(`/room/${roomId}/final`);
-  }, [loading, authLoading, state.phase, navigate, captainId, roomId]);
+  }, [loading, authLoading, authGateLoading, state.phase, navigate, captainId, roomId]);
 
-  if (me && !captainMatchesUser(me, user?.uid)) {
+  if (authGateLoading || !user) {
+    return null;
+  }
+
+  if (me && !captainMatchesUser(me, authedUser?.uid)) {
     return (
       <div className="card center-card">
         <p className="error">This captain profile is linked to a different account.</p>
@@ -104,9 +109,7 @@ export function AuctionPage() {
       theme="captain"
     >
       <AuthUserBar />
-      <RequireAuth title="Captain sign in" subtitle="Sign in to bid in the live auction.">
-        <AuctionPageCaptain />
-      </RequireAuth>
+      <AuctionPageCaptain />
     </Layout>
   );
 }

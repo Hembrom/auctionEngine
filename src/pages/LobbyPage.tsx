@@ -8,9 +8,9 @@ import { CaptainIdentityBar } from '../components/CaptainIdentityBar';
 import { MySquadPanel } from '../components/MySquadPanel';
 import { SpectatorBanner } from '../components/SpectatorBanner';
 import { CaptainDashboard } from '../components/CaptainDashboard';
-import { RequireAuth } from '../components/RequireAuth';
 import { AuthUserBar } from '../components/AuthUserBar';
 import { useCaptainSession } from '../hooks/useCaptainSession';
+import { useRequireCaptainLogin } from '../hooks/useRequireCaptainLogin';
 import { useAuth } from '../context/AuthContext';
 import { captainMatchesUser } from '../lib/captainAccess';
 import { setTeamName } from '../lib/auctionService';
@@ -19,7 +19,8 @@ function LobbyPageCaptain() {
   const roomId = useRoomId();
   const { state, captains, loading } = useAuctionData(roomId);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authGateLoading } = useRequireCaptainLogin(roomId);
+  const { user: authedUser } = useAuth();
   const { authLoading, captainId } = useCaptainSession(roomId);
   const me = captains.find((c) => c.id === captainId);
   const [teamName, setTeamNameLocal] = useState(me?.teamName ?? '');
@@ -29,23 +30,27 @@ function LobbyPageCaptain() {
   const approved = captains.filter((c) => c.status === 'approved');
 
   useEffect(() => {
-    if (loading || authLoading) return;
+    if (loading || authLoading || authGateLoading) return;
     if (!captainId) {
       navigate(`/room/${roomId}`);
       return;
     }
-    if (me && !captainMatchesUser(me, user?.uid)) return;
+    if (me && !captainMatchesUser(me, authedUser?.uid)) return;
     if (me?.status === 'pending') navigate(`/room/${roomId}/waiting`);
     if (['live', 'result', 'unsold'].includes(state.phase)) {
       navigate(`/room/${roomId}/auction`);
       return;
     }
     if (state.phase === 'ended') navigate(`/room/${roomId}/final`);
-  }, [loading, authLoading, state.phase, me, captainId, user?.uid, navigate, roomId]);
+  }, [loading, authLoading, authGateLoading, state.phase, me, captainId, authedUser?.uid, navigate, roomId]);
 
   useEffect(() => {
     if (me) setTeamNameLocal(me.teamName);
   }, [me?.teamName]);
+
+  if (authGateLoading || !user) {
+    return null;
+  }
 
   const handleSaveTeam = async () => {
     if (!captainId || !me) return;
@@ -174,9 +179,7 @@ export function LobbyPage() {
       {spectating ? (
         <LobbyPageSpectator />
       ) : (
-        <RequireAuth title="Captain sign in" subtitle="Sign in to enter the lobby.">
-          <LobbyPageCaptain />
-        </RequireAuth>
+        <LobbyPageCaptain />
       )}
     </Layout>
   );

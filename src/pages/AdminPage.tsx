@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { CollapsibleSection } from '../components/CollapsibleSection';
 import { AuctionDashboardSections } from '../components/AuctionDashboardSections';
@@ -11,7 +11,6 @@ import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine, useCountdown } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
 import { useAuth } from '../context/AuthContext';
-import { LoginForm } from '../components/LoginForm';
 import { AuthUserBar } from '../components/AuthUserBar';
 import { canAccessAdminPanel, isLegacyAdminId } from '../lib/adminAccess';
 import {
@@ -33,6 +32,7 @@ import {
   updateTimerSettings,
 } from '../lib/auctionService';
 import { PlayerRegistrationForm } from '../components/PlayerRegistrationForm';
+import { AdminPlayerPhotos } from '../components/AdminPlayerPhotos';
 import { parseCsvPlayers, validatePlayerPositions, getUnsoldPlayers, areAllSquadsFull } from '../lib/auctionLogic';
 import { createDefaultPlayerForm, sanitizePlayerForm } from '../lib/playerUtils';
 import { isAuctionPaused, getBidTimerSeconds, getResultTimerSeconds } from '../lib/auctionState';
@@ -236,12 +236,10 @@ export function AdminPage() {
 
   if (needsFirebaseLogin) {
     return (
-      <Layout title="Admin Panel" subtitle={state.displayName || roomId} badge={roomId} theme="admin">
-        <LoginForm
-          title="Admin sign in"
-          subtitle="Sign in with the account that created this room."
-        />
-      </Layout>
+      <Navigate
+        to={`/login/admin?next=${encodeURIComponent(`/room/${roomId}/admin`)}`}
+        replace
+      />
     );
   }
 
@@ -443,6 +441,8 @@ export function AdminPage() {
               )}
             </section>
           )}
+
+          {players.length > 0 && <AdminPlayerPhotos roomId={roomId} players={players} />}
 
         </div>
       </CollapsibleSection>

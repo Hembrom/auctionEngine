@@ -26,6 +26,8 @@ export interface Player {
   id: string;
   name: string;
   positions: Position[];
+  /** Public URL (e.g. Firebase Storage) for auction / browse UI. */
+  imageUrl?: string;
   /** Organizing teammates & decisions under pressure (1–10). */
   organizingComfort: number;
   /** How often teammates look to you for guidance (1–10). */
@@ -134,11 +136,9 @@ export interface PlayerFormData {
 }
 
 export const SQUAD_SIZE = 7;
-export const GK_REQUIRED = 1;
-export const OUTFIELD_SIZE = SQUAD_SIZE - GK_REQUIRED;
 export const STARTING_BUDGET = 1000;
 export const STARTING_BID = 10;
 export const MIN_BID_INCREMENT = 1;
 export const TIMER_SECONDS = 30;
 export const RESULT_SECONDS = 10;
-export const POSITION_ORDER: Position[] = ['GK', 'ST', 'DEF', 'MID'];
+export const POSITION_ORDER: Position[] = ['GK', 'DEF', 'MID', 'ST'];
