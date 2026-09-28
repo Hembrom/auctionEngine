@@ -101,6 +101,8 @@ function formatAuthError(err: unknown): string {
       return 'Password must be at least 6 characters.';
     case 'auth/too-many-requests':
       return 'Too many attempts. Try again later.';
+    case 'auth/operation-not-allowed':
+      return 'Email/password sign-in is disabled for this Firebase project. In Firebase Console → Authentication → Sign-in method, enable Email/Password, then try again.';
     default:
       return (err as Error).message || 'Authentication failed.';
   }
