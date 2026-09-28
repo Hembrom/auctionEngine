@@ -5,6 +5,7 @@ import {
   PLAYER_SKILLS,
   PLAYER_SKILL_LABELS,
   RATING_MAX,
+  getOverallRating,
   getPlayerSkillValue,
 } from '../lib/playerUtils';
 
@@ -26,11 +27,17 @@ function SkillBar({ label, value, max = RATING_MAX }: { label: string; value: nu
 }
 
 export function PlayerCard({ player, large }: PlayerCardProps) {
+  const overall = getOverallRating(player);
+
   return (
     <div className={`player-card ${large ? 'player-card-lg' : ''}`}>
       <div className="player-card-split">
         <aside className="player-card-left">
           <PlayerPhoto player={player} size={large ? 'lg' : 'md'} showPlaceholder />
+          <div className="player-overall-badge" aria-label={`Overall rating ${overall} out of 100`}>
+            <span className="player-overall-value">{overall}</span>
+            <span className="player-overall-label">Overall /100</span>
+          </div>
           <h2 className="player-card-name">{player.name}</h2>
           <div className="position-tags player-card-positions">
             {player.positions.map((p) => (

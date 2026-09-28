@@ -1,5 +1,5 @@
 import type { Position, Player, PlayerFormData, PlayerMark, PlayerSkill } from '../types';
-import { normalizePlayFrequency } from './playFrequency';
+import { getPlayFrequencyScore100, normalizePlayFrequency } from './playFrequency';
 
 export const RATING_MAX = 10;
 
@@ -136,10 +136,23 @@ export function getPlayerSkillValue(player: Player, skill: PlayerSkill): number 
   return player[skill];
 }
 
-/** Average of on-pitch skills (1–10), rounded to 1 decimal. */
+/** Map a 1–10 stat to 0–100 (e.g. 2/10 → 20/100). */
+export function ratingToScore100(rating: number): number {
+  return clampRating(rating) * 10;
+}
+
+/** Overall 0–100: average of seven skills (×10) plus play frequency score. */
 export function getOverallRating(player: Player): number {
-  const total = PLAYER_SKILLS.reduce((sum, skill) => sum + getPlayerSkillValue(player, skill), 0);
-  return Math.round((total / PLAYER_SKILLS.length) * 10) / 10;
+  const skillScores = PLAYER_SKILLS.map((skill) =>
+    ratingToScore100(getPlayerSkillValue(player, skill)),
+  );
+  const playScore = getPlayFrequencyScore100(player.playFrequency);
+  const total = skillScores.reduce((sum, n) => sum + n, 0) + playScore;
+  return Math.round(total / (PLAYER_SKILLS.length + 1));
+}
+
+export function formatOverallRating(player: Player): string {
+  return `${getOverallRating(player)}/100`;
 }
 
 export const PLAYER_MARKS: PlayerMark[] = ['5-star', '4-star', '3-star', 'local', 'priority'];

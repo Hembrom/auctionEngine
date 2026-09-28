@@ -212,13 +212,13 @@ export function PlayersPage() {
             </select>
           </div>
           <div className="form-row">
-            <label htmlFor="player-min">Min overall rating</label>
+            <label htmlFor="player-min">Min overall (/100)</label>
             <input
               id="player-min"
               type="number"
               min={0}
-              max={10}
-              step={0.5}
+              max={100}
+              step={1}
               value={minOverall || ''}
               placeholder="0"
               onChange={(e) => setMinOverall(Number(e.target.value) || 0)}

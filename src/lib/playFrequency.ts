@@ -24,6 +24,14 @@ export function getPlayFrequencyBarValue(id: PlayFrequency | undefined): number 
   return getPlayFrequencyOption(id).barValue;
 }
 
+/** 0–100 for overall: Never = 0, Multiple Times a Week = 100; others linear between. */
+export function getPlayFrequencyScore100(id: PlayFrequency | undefined): number {
+  const opt = getPlayFrequencyOption(id);
+  if (opt.id === 'never') return 0;
+  if (opt.id === 'multiple_week') return 100;
+  return Math.round(((opt.barValue - 1) / 9) * 100);
+}
+
 export function normalizePlayFrequency(raw: unknown): PlayFrequency {
   if (typeof raw === 'string' && raw in BY_ID) {
     return raw as PlayFrequency;

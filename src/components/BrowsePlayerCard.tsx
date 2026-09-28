@@ -48,7 +48,7 @@ export function BrowsePlayerCard({
         </div>
         <div className="browse-overall">
           <span className="browse-overall-value">{overall}</span>
-          <span className="muted">Overall</span>
+          <span className="muted">Overall /100</span>
         </div>
       </div>
 
