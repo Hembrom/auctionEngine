@@ -64,6 +64,8 @@ export interface Captain {
   budget: number;
   squad: SquadPlayer[];
   joinedAt: number;
+  /** Firebase Auth UID — ties this captain to a login. */
+  authUid?: string;
   /** Player IDs this captain has shortlisted (personal). */
   shortlist?: string[];
   /** Personal tags/marks keyed by player ID. */

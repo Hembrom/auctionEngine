@@ -5,9 +5,13 @@ import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanne
 import { createRoom, roomExists, getRoom } from '../lib/auctionService';
 import { slugifyRoomName, isValidRoomSlug, pathForAuctionPhase } from '../lib/roomUtils';
 import { setAdminId, setSpectator } from '../hooks/useSession';
+import { useAuth } from '../context/AuthContext';
+import { LoginForm } from '../components/LoginForm';
+import { AuthUserBar } from '../components/AuthUserBar';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [createName, setCreateName] = useState('');
   const [joinName, setJoinName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,12 +23,15 @@ export function HomePage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createName.trim()) return;
+    if (!user) {
+      setError('Sign in to create a room as admin.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      const adminId = `admin_${Date.now()}`;
-      const roomId = await createRoom(createName.trim(), adminId);
-      setAdminId(roomId, adminId);
+      const roomId = await createRoom(createName.trim(), user.uid);
+      setAdminId(roomId, user.uid);
       navigate(`/room/${roomId}/admin`);
     } catch (err) {
       setError((err as Error).message);
@@ -86,13 +93,20 @@ export function HomePage() {
     <Layout title="Football Auction" subtitle="Create or join a room">
       <FirebaseBanner />
       <FirebaseErrorBanner error={error.includes('Firestore') ? error : null} />
+      <AuthUserBar />
 
       <div className="grid-2">
         <div className="card">
           <h3>Create Room (Admin)</h3>
           <p className="muted">
-            Start a new auction. Each room is isolated — other admins won't interfere.
+            Start a new auction. Sign in with email — your account owns the room.
           </p>
+          {!authLoading && !user ? (
+            <LoginForm
+              title="Admin sign in"
+              subtitle="Create an account or sign in, then create your room below."
+            />
+          ) : (
           <form onSubmit={handleCreate} className="join-form">
             <label htmlFor="create">Room Name</label>
             <input
@@ -102,10 +116,11 @@ export function HomePage() {
               onChange={(e) => setCreateName(e.target.value)}
             />
             {createSlug && <p className="muted">URL: /room/{createSlug}</p>}
-            <button type="submit" disabled={loading || !createName.trim()}>
+            <button type="submit" disabled={loading || !createName.trim() || !user}>
               {loading ? 'Creating...' : 'Create & Open Admin'}
             </button>
           </form>
+          )}
         </div>
 
         <div className="card">

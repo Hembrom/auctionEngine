@@ -3,19 +3,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
-import { getCaptainId, isSpectator } from '../hooks/useSession';
+import { isSpectator } from '../hooks/useSession';
 import { CaptainIdentityBar } from '../components/CaptainIdentityBar';
 import { MySquadPanel } from '../components/MySquadPanel';
 import { SpectatorBanner } from '../components/SpectatorBanner';
 import { CaptainDashboard } from '../components/CaptainDashboard';
+import { RequireAuth } from '../components/RequireAuth';
+import { AuthUserBar } from '../components/AuthUserBar';
+import { useCaptainSession } from '../hooks/useCaptainSession';
+import { useAuth } from '../context/AuthContext';
+import { captainMatchesUser } from '../lib/captainAccess';
 import { setTeamName } from '../lib/auctionService';
 
-export function LobbyPage() {
+function LobbyPageCaptain() {
   const roomId = useRoomId();
   const { state, captains, loading } = useAuctionData(roomId);
   const navigate = useNavigate();
-  const captainId = getCaptainId(roomId);
-  const spectating = isSpectator(roomId);
+  const { user } = useAuth();
+  const { authLoading, captainId } = useCaptainSession(roomId);
   const me = captains.find((c) => c.id === captainId);
   const [teamName, setTeamNameLocal] = useState(me?.teamName ?? '');
   const [saved, setSaved] = useState(false);
@@ -24,18 +29,19 @@ export function LobbyPage() {
   const approved = captains.filter((c) => c.status === 'approved');
 
   useEffect(() => {
-    if (loading) return;
-    if (!captainId && !spectating) {
+    if (loading || authLoading) return;
+    if (!captainId) {
       navigate(`/room/${roomId}`);
       return;
     }
+    if (me && !captainMatchesUser(me, user?.uid)) return;
     if (me?.status === 'pending') navigate(`/room/${roomId}/waiting`);
     if (['live', 'result', 'unsold'].includes(state.phase)) {
-      navigate(spectating ? `/room/${roomId}/spectate` : `/room/${roomId}/auction`);
+      navigate(`/room/${roomId}/auction`);
       return;
     }
     if (state.phase === 'ended') navigate(`/room/${roomId}/final`);
-  }, [loading, state.phase, me, captainId, spectating, navigate, roomId]);
+  }, [loading, authLoading, state.phase, me, captainId, user?.uid, navigate, roomId]);
 
   useEffect(() => {
     if (me) setTeamNameLocal(me.teamName);
@@ -54,14 +60,7 @@ export function LobbyPage() {
   };
 
   return (
-    <Layout
-      title="Lobby"
-      subtitle={state.displayName || 'Auction starting soon'}
-      badge={spectating ? 'SPECTATOR' : `${approved.length} captains`}
-      captainName={me ? `${me.name} (${me.teamName})` : undefined}
-      theme={spectating ? 'spectator' : 'captain'}
-    >
-      {spectating && <SpectatorBanner />}
+    <>
       {me && <CaptainIdentityBar captain={me} />}
       {me && <MySquadPanel captain={me} />}
 
@@ -71,19 +70,14 @@ export function LobbyPage() {
         </Link>
       </p>
 
-      {spectating && approved.length > 0 && (
-        <div className="watch-sections" style={{ marginBottom: '1rem' }}>
-          <CaptainDashboard captains={captains} title="All Captain Squads" />
-        </div>
-      )}
-
-      <div className={spectating ? 'grid-1' : 'grid-2'}>
-        {!spectating && (
+      <div className="grid-2">
         <div className="card">
           <h3>Your Team</h3>
           {me && (
             <>
-              <p>Captain: <strong>{me.name}</strong></p>
+              <p>
+                Captain: <strong>{me.name}</strong>
+              </p>
               <div className="form-row">
                 <label>Team Name (optional)</label>
                 <input
@@ -91,7 +85,9 @@ export function LobbyPage() {
                   onChange={(e) => setTeamNameLocal(e.target.value)}
                   placeholder={me.name}
                 />
-                <button onClick={handleSaveTeam}>Save</button>
+                <button type="button" onClick={handleSaveTeam}>
+                  Save
+                </button>
                 {saved && <span className="success">Saved!</span>}
                 {teamError && <p className="error">{teamError}</p>}
               </div>
@@ -99,7 +95,6 @@ export function LobbyPage() {
             </>
           )}
         </div>
-        )}
 
         <div className="card">
           <h3>Approved Captains</h3>
@@ -114,6 +109,75 @@ export function LobbyPage() {
           <p className="muted">Waiting for admin to start the auction...</p>
         </div>
       </div>
+    </>
+  );
+}
+
+function LobbyPageSpectator() {
+  const roomId = useRoomId();
+  const { state, captains, loading } = useAuctionData(roomId);
+  const navigate = useNavigate();
+  const approved = captains.filter((c) => c.status === 'approved');
+
+  useEffect(() => {
+    if (loading) return;
+    if (['live', 'result', 'unsold'].includes(state.phase)) {
+      navigate(`/room/${roomId}/spectate`, { replace: true });
+      return;
+    }
+    if (state.phase === 'ended') navigate(`/room/${roomId}/final`);
+  }, [loading, state.phase, navigate, roomId]);
+
+  return (
+    <>
+      <SpectatorBanner />
+      <p className="players-nav">
+        <Link to={`/room/${roomId}/players`} className="btn-link">
+          Browse Players
+        </Link>
+      </p>
+      {approved.length > 0 && (
+        <div className="watch-sections" style={{ marginBottom: '1rem' }}>
+          <CaptainDashboard captains={captains} title="All Captain Squads" />
+        </div>
+      )}
+      <div className="card">
+        <h3>Approved Captains</h3>
+        <ul className="captain-list">
+          {approved.map((c) => (
+            <li key={c.id}>
+              <strong>{c.teamName}</strong>
+              <span className="muted"> ({c.name})</span>
+            </li>
+          ))}
+        </ul>
+        <p className="muted">Waiting for admin to start the auction...</p>
+      </div>
+    </>
+  );
+}
+
+export function LobbyPage() {
+  const roomId = useRoomId();
+  const { captains } = useAuctionData(roomId);
+  const spectating = isSpectator(roomId);
+  const approved = captains.filter((c) => c.status === 'approved');
+
+  return (
+    <Layout
+      title="Lobby"
+      subtitle="Auction starting soon"
+      badge={spectating ? 'SPECTATOR' : `${approved.length} captains`}
+      theme={spectating ? 'spectator' : 'captain'}
+    >
+      <AuthUserBar />
+      {spectating ? (
+        <LobbyPageSpectator />
+      ) : (
+        <RequireAuth title="Captain sign in" subtitle="Sign in to enter the lobby.">
+          <LobbyPageCaptain />
+        </RequireAuth>
+      )}
     </Layout>
   );
 }

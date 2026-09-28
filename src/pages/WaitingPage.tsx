@@ -1,21 +1,26 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
+import { RequireAuth } from '../components/RequireAuth';
+import { AuthUserBar } from '../components/AuthUserBar';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
-import { getCaptainId } from '../hooks/useSession';
+import { useCaptainSession } from '../hooks/useCaptainSession';
+import { useAuth } from '../context/AuthContext';
+import { captainMatchesUser } from '../lib/captainAccess';
 
-export function WaitingPage() {
+function WaitingPageContent() {
   const roomId = useRoomId();
   const { state, captains, loading } = useAuctionData(roomId);
   const navigate = useNavigate();
-  const captainId = getCaptainId(roomId);
+  const { user } = useAuth();
+  const { authLoading, captainId } = useCaptainSession(roomId);
   const me = captains.find((c) => c.id === captainId);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || authLoading) return;
     if (!captainId) {
-      navigate(`/room/${roomId}`);
+      navigate(`/room/${roomId}`, { replace: true });
       return;
     }
     if (me?.status === 'rejected') return;
@@ -27,45 +32,63 @@ export function WaitingPage() {
         navigate(`/room/${roomId}/lobby`);
       }
     }
-  }, [loading, me?.status, state.phase, captainId, navigate, roomId]);
+  }, [loading, authLoading, me?.status, state.phase, captainId, navigate, roomId]);
 
-  if (!me) {
+  if (authLoading || !me) {
     return (
-      <Layout title="Waiting Room" badge={roomId} theme="captain">
-        <div className="card center-card"><p>Loading...</p></div>
-      </Layout>
+      <div className="card center-card">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!captainMatchesUser(me, user?.uid)) {
+    return (
+      <div className="card center-card">
+        <p className="error">This captain profile is linked to a different account.</p>
+      </div>
     );
   }
 
   if (me.status === 'rejected') {
     return (
-      <Layout title="Access Denied" badge={roomId} theme="captain">
-        <div className="card center-card">
-          <p className="error">Your request to join was rejected by the admin.</p>
-        </div>
-      </Layout>
+      <div className="card center-card">
+        <p className="error">Your request to join was rejected by the admin.</p>
+      </div>
     );
   }
 
   if (me.status === 'approved') {
     return (
-      <Layout title="Approved!" badge={roomId} theme="captain">
-        <div className="card center-card">
-          <p>You're in! Taking you to the lobby...</p>
-        </div>
-      </Layout>
+      <div className="card center-card">
+        <p>You're in! Taking you to the lobby...</p>
+      </div>
     );
   }
 
   return (
+    <div className="card center-card">
+      <div className="pulse-dot" />
+      <p>
+        Hi <strong>{me.name}</strong>, please wait while the admin reviews your request.
+      </p>
+      <p className="muted" style={{ marginTop: '1rem' }}>
+        Meanwhile you can <Link to={`/room/${roomId}/players`}>browse players</Link>. Shortlisting
+        unlocks after approval.
+      </p>
+    </div>
+  );
+}
+
+export function WaitingPage() {
+  const roomId = useRoomId();
+
+  return (
     <Layout title="Waiting Room" subtitle="Waiting for admin approval" badge={roomId} theme="captain">
-      <div className="card center-card">
-        <div className="pulse-dot" />
-        <p>Hi <strong>{me.name}</strong>, please wait while the admin reviews your request.</p>
-        <p className="muted" style={{ marginTop: '1rem' }}>
-          Meanwhile you can <Link to={`/room/${roomId}/players`}>browse players</Link>. Shortlisting unlocks after approval.
-        </p>
-      </div>
+      <AuthUserBar />
+      <RequireAuth title="Captain sign in" subtitle="Sign in to access your waiting room.">
+        <WaitingPageContent />
+      </RequireAuth>
     </Layout>
   );
 }

@@ -10,7 +10,10 @@ import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanne
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine, useCountdown } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
-import { getAdminId } from '../hooks/useSession';
+import { useAuth } from '../context/AuthContext';
+import { LoginForm } from '../components/LoginForm';
+import { AuthUserBar } from '../components/AuthUserBar';
+import { canAccessAdminPanel, isLegacyAdminId } from '../lib/adminAccess';
 import {
   approveCaptain,
   rejectCaptain,
@@ -38,6 +41,7 @@ import { STARTING_BUDGET, TIMER_SECONDS, RESULT_SECONDS } from '../types';
 export function AdminPage() {
   const roomId = useRoomId();
   const { state, captains, players, bids, loading, firebaseError } = useAuctionData(roomId);
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [startingBudget, setStartingBudget] = useState(STARTING_BUDGET);
   const [bidTimerSeconds, setBidTimerSeconds] = useState(TIMER_SECONDS);
@@ -59,8 +63,8 @@ export function AdminPage() {
 
   const [form, setForm] = useState(createDefaultPlayerForm);
 
-  const adminId = getAdminId(roomId);
-  const isOwner = !!adminId && state.adminId === adminId;
+  const isOwner = canAccessAdminPanel(roomId, state, user?.uid);
+  const needsFirebaseLogin = !isLegacyAdminId(state.adminId) && !user;
   const pending = captains.filter((c) => c.status === 'pending');
   const approved = captains.filter((c) => c.status === 'approved');
   const unsoldPlayers = getUnsoldPlayers(players);
@@ -220,6 +224,27 @@ export function AdminPage() {
     </div>
   ) : null;
 
+  if (authLoading) {
+    return (
+      <Layout title="Admin Panel" badge={roomId} theme="admin">
+        <div className="card center-card">
+          <p className="muted">Checking sign-in…</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (needsFirebaseLogin) {
+    return (
+      <Layout title="Admin Panel" subtitle={state.displayName || roomId} badge={roomId} theme="admin">
+        <LoginForm
+          title="Admin sign in"
+          subtitle="Sign in with the account that created this room."
+        />
+      </Layout>
+    );
+  }
+
   if (!isOwner) {
     return (
       <Layout title="Admin Access Denied" badge={roomId}>
@@ -245,6 +270,7 @@ export function AdminPage() {
     >
       <FirebaseBanner />
       <FirebaseErrorBanner error={firebaseError} />
+      <AuthUserBar />
 
       {!loading && !firebaseError && (
         <p className="connection-status">

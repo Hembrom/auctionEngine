@@ -5,7 +5,9 @@ import { BrowsePlayerCard } from '../components/BrowsePlayerCard';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
-import { getAdminId, getCaptainId, isSpectator } from '../hooks/useSession';
+import { getCaptainId, isSpectator } from '../hooks/useSession';
+import { useAuth } from '../context/AuthContext';
+import { canAccessAdminPanel } from '../lib/adminAccess';
 import {
   toggleCaptainShortlist,
   setCaptainPlayerTags,
@@ -27,9 +29,10 @@ type SortKey = 'name' | 'overall' | 'position';
 export function PlayersPage() {
   const roomId = useRoomId();
   const { state, captains, players, loading, firebaseError } = useAuctionData(roomId);
+  const { user } = useAuth();
   const captainId = getCaptainId(roomId);
   const spectating = isSpectator(roomId);
-  const isAdmin = !!getAdminId(roomId) && state.adminId === getAdminId(roomId);
+  const isAdmin = canAccessAdminPanel(roomId, state, user?.uid);
   const me = captains.find((c) => c.id === captainId);
   const canShortlist = !!me && me.status === 'approved';
 

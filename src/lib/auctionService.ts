@@ -158,13 +158,31 @@ export function subscribeBids(
   );
 }
 
+export async function findCaptainByAuthUid(
+  roomId: string,
+  authUid: string,
+): Promise<Captain | null> {
+  const q = query(roomPaths(roomId).captains, where('authUid', '==', authUid));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const docSnap = snap.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as Captain;
+}
+
 export async function requestJoin(
   roomId: string,
   name: string,
   teamName: string,
+  authUid: string,
 ): Promise<string> {
   const exists = await roomExists(roomId);
   if (!exists) throw new Error('Room not found.');
+  if (!authUid) throw new Error('You must be signed in to join as a captain.');
+
+  const existing = await findCaptainByAuthUid(roomId, authUid);
+  if (existing && existing.status !== 'rejected') {
+    return existing.id;
+  }
 
   const trimmedName = name.trim();
   const trimmedTeam = teamName.trim();
@@ -178,11 +196,13 @@ export async function requestJoin(
   for (const docSnap of captainsSnap.docs) {
     const c = docSnap.data() as Captain;
     if (c.status === 'rejected') continue;
-    if (normalizeCaptainLabel(c.name) === normName) {
-      throw new Error('Captain name is already taken in this room.');
-    }
-    if (normalizeCaptainLabel(c.teamName) === normTeam) {
-      throw new Error('Team name is already taken in this room.');
+    if (c.authUid && c.authUid !== authUid) {
+      if (normalizeCaptainLabel(c.name) === normName) {
+        throw new Error('Captain name is already taken in this room.');
+      }
+      if (normalizeCaptainLabel(c.teamName) === normTeam) {
+        throw new Error('Team name is already taken in this room.');
+      }
     }
   }
 
@@ -193,6 +213,7 @@ export async function requestJoin(
     budget: STARTING_BUDGET,
     squad: [],
     joinedAt: Date.now(),
+    authUid,
   });
   return ref.id;
 }
