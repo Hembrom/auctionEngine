@@ -96,6 +96,13 @@ export interface ResultDisplay {
   amount?: number;
 }
 
+export interface AdminRoomSummary {
+  roomId: string;
+  displayName: string;
+  phase: AuctionPhase;
+  createdAt: number;
+}
+
 export interface AuctionState {
   displayName: string;
   createdAt: number;

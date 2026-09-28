@@ -270,6 +270,12 @@ export function AdminPage() {
       <FirebaseErrorBanner error={firebaseError} />
       <AuthUserBar />
 
+      <p className="players-nav">
+        <Link to="/create" className="btn-link">
+          ← All my rooms
+        </Link>
+      </p>
+
       {!loading && !firebaseError && (
         <p className="connection-status">
           Room <strong>{roomId}</strong> · {captains.length} captain(s) · {pending.length} pending

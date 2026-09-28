@@ -10,6 +10,7 @@ import {
   runTransaction,
   query,
   where,
+  orderBy,
   getDocs,
   writeBatch,
   deleteField,
@@ -20,6 +21,7 @@ import {
 } from './playerImageStorage';
 import { db, COLLECTIONS, SUBCOLLECTIONS } from '../firebase';
 import type {
+  AdminRoomSummary,
   AuctionState,
   Captain,
   Player,
@@ -86,6 +88,24 @@ export async function createRoom(displayName: string, adminId: string): Promise<
   });
 
   return roomId;
+}
+
+export async function listAdminRooms(adminId: string): Promise<AdminRoomSummary[]> {
+  const q = query(
+    collection(db, COLLECTIONS.rooms),
+    where('adminId', '==', adminId),
+    orderBy('createdAt', 'desc'),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => {
+    const data = d.data() as AuctionState;
+    return {
+      roomId: d.id,
+      displayName: data.displayName || d.id,
+      phase: data.phase,
+      createdAt: data.createdAt ?? 0,
+    };
+  });
 }
 
 export function subscribeRoomState(
