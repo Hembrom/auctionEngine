@@ -10,21 +10,25 @@ import { useCaptainSession } from '../hooks/useCaptainSession';
 import { useAuth } from '../context/AuthContext';
 import { requestJoin } from '../lib/auctionService';
 import { setCaptainId } from '../hooks/useSession';
+import { pathForCaptainInRoom } from '../lib/captainRouting';
 
 function JoinPageContent() {
   const roomId = useRoomId();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { state, captains } = useAuctionData(roomId);
   const { authLoading, captainId } = useCaptainSession(roomId);
+  const me = captains.find((c) => c.id === captainId);
   const [name, setName] = useState('');
   const [teamName, setTeamName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (authLoading || !captainId) return;
-    navigate(`/room/${roomId}/waiting`, { replace: true });
-  }, [authLoading, captainId, navigate, roomId]);
+    if (authLoading || !captainId || !me) return;
+    if (me.status === 'rejected') return;
+    navigate(pathForCaptainInRoom(roomId, state.phase, me), { replace: true });
+  }, [authLoading, captainId, me, state.phase, navigate, roomId]);
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,7 +4,9 @@ import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { createRoom, roomExists, getRoom } from '../lib/auctionService';
 import { slugifyRoomName, isValidRoomSlug, pathForAuctionPhase } from '../lib/roomUtils';
-import { setAdminId, setSpectator } from '../hooks/useSession';
+import { setAdminId, setSpectator, setCaptainId } from '../hooks/useSession';
+import { findCaptainByAuthUid } from '../lib/auctionService';
+import { pathForCaptainInRoom } from '../lib/captainRouting';
 import { useAuth } from '../context/AuthContext';
 import { LoginForm } from '../components/LoginForm';
 import { AuthUserBar } from '../components/AuthUserBar';
@@ -43,6 +45,10 @@ export function HomePage() {
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!joinName.trim()) return;
+    if (!user) {
+      setError('Sign in to join as a captain.');
+      return;
+    }
     const roomId = slugifyRoomName(joinName);
     if (!isValidRoomSlug(roomId)) {
       setError('Enter a valid room name (at least 3 characters).');
@@ -54,6 +60,14 @@ export function HomePage() {
       const exists = await roomExists(roomId);
       if (!exists) {
         setError(`Room "${roomId}" not found. Check the name with your admin.`);
+        return;
+      }
+      const existing = await findCaptainByAuthUid(roomId, user.uid);
+      if (existing && existing.status !== 'rejected') {
+        setCaptainId(roomId, existing.id);
+        const room = await getRoom(roomId);
+        const phase = room?.phase ?? 'waiting';
+        navigate(pathForCaptainInRoom(roomId, phase, existing));
         return;
       }
       navigate(`/room/${roomId}`);
@@ -125,7 +139,15 @@ export function HomePage() {
 
         <div className="card">
           <h3>Join Room (Captain)</h3>
-          <p className="muted">Enter the room name your admin shared with you.</p>
+          <p className="muted">
+            Sign in with email — your account stays linked to your team in each room.
+          </p>
+          {!authLoading && !user ? (
+            <LoginForm
+              title="Captain sign in"
+              subtitle="Create an account or sign in, then enter your room name below."
+            />
+          ) : (
           <form onSubmit={handleJoin} className="join-form">
             <label htmlFor="join">Room Name</label>
             <input
@@ -135,7 +157,7 @@ export function HomePage() {
               onChange={(e) => setJoinName(e.target.value)}
             />
             {joinSlug && <p className="muted">Room ID: {joinSlug}</p>}
-            <button type="submit" disabled={loading || !joinName.trim()}>
+            <button type="submit" disabled={loading || !joinName.trim() || !user}>
               {loading ? 'Joining...' : 'Join as Captain'}
             </button>
             <button
@@ -147,6 +169,7 @@ export function HomePage() {
               Watch as Spectator
             </button>
           </form>
+          )}
         </div>
       </div>
 
