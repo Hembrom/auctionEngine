@@ -10,7 +10,6 @@ import {
   runTransaction,
   query,
   where,
-  orderBy,
   getDocs,
   writeBatch,
   deleteField,
@@ -91,13 +90,9 @@ export async function createRoom(displayName: string, adminId: string): Promise<
 }
 
 export async function listAdminRooms(adminId: string): Promise<AdminRoomSummary[]> {
-  const q = query(
-    collection(db, COLLECTIONS.rooms),
-    where('adminId', '==', adminId),
-    orderBy('createdAt', 'desc'),
-  );
+  const q = query(collection(db, COLLECTIONS.rooms), where('adminId', '==', adminId));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => {
+  const rooms = snap.docs.map((d) => {
     const data = d.data() as AuctionState;
     return {
       roomId: d.id,
@@ -106,6 +101,8 @@ export async function listAdminRooms(adminId: string): Promise<AdminRoomSummary[
       createdAt: data.createdAt ?? 0,
     };
   });
+  rooms.sort((a, b) => b.createdAt - a.createdAt);
+  return rooms;
 }
 
 export function subscribeRoomState(

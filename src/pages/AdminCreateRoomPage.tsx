@@ -100,14 +100,8 @@ export function AdminCreateRoomPage() {
         </div>
         {roomsLoading ? (
           <p className="muted">Loading rooms…</p>
-        ) : roomsError && !roomsError.includes('index') ? (
+        ) : roomsError ? (
           <p className="error">{roomsError}</p>
-        ) : roomsError.includes('index') ? (
-          <p className="error">
-            Firestore index required. Deploy indexes from this repo (
-            <code>firebase deploy --only firestore:indexes</code>) or use the link in the browser
-            console, then refresh.
-          </p>
         ) : rooms.length === 0 ? (
           <p className="muted">No rooms yet — create your first auction below.</p>
         ) : (

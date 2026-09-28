@@ -1,14 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "rooms",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "adminId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "bids",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
