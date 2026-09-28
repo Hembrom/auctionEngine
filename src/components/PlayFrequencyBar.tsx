@@ -6,12 +6,19 @@ export function PlayFrequencyBar({ frequency }: { frequency: PlayFrequency | und
   const { label, barValue } = getPlayFrequencyOption(frequency);
 
   return (
-    <div className="play-frequency-block">
-      <span className="rating-label play-frequency-field-label">Play frequency</span>
-      <span className="play-frequency-choice">{label}</span>
-      <div className="rating-bar play-frequency-bar">
-        <div className="rating-fill" style={{ width: `${(barValue / RATING_MAX) * 100}%` }} />
+    <div className="rating-row skill-row play-frequency-row">
+      <span className="rating-label">Play frequency</span>
+      <div className="play-frequency-bar-cell">
+        <span className="play-frequency-choice" title={label}>
+          {label}
+        </span>
+        <div className="rating-bar">
+          <div className="rating-fill" style={{ width: `${(barValue / RATING_MAX) * 100}%` }} />
+        </div>
       </div>
+      <span className="rating-value">
+        {barValue}/{RATING_MAX}
+      </span>
     </div>
   );
 }

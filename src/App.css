@@ -553,6 +553,11 @@ button:disabled {
   gap: 0.45rem;
 }
 
+.skills-matrix .rating-row {
+  min-height: 2.125rem;
+  align-items: center;
+}
+
 @media (max-width: 720px) {
   .player-card-split {
     grid-template-columns: 1fr;
@@ -640,30 +645,22 @@ button:disabled {
   min-width: 5.5rem;
 }
 
-.play-frequency-block {
+.play-frequency-bar-cell {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.35rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.play-frequency-field-label {
-  font-size: 0.75rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  gap: 0.12rem;
+  min-width: 0;
+  justify-content: center;
 }
 
 .play-frequency-choice {
-  font-size: 0.9rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  line-height: 1.25;
-}
-
-.play-frequency-bar {
-  width: 100%;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
 }
 
 .play-frequency-picker {
@@ -685,7 +682,7 @@ button:disabled {
   margin-top: 0.2rem;
 }
 
-.browse-skills-bars .play-frequency-block {
+.browse-skills-bars .play-frequency-row {
   grid-column: 1 / -1;
 }
 
