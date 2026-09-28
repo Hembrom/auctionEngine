@@ -1964,6 +1964,11 @@ button:disabled {
   margin-top: 1rem;
 }
 
+.home-admin-card {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
 .home-auth-cta {
   display: flex;
   flex-direction: column;
