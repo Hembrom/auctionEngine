@@ -8,6 +8,7 @@ import {
   TIMER_SECONDS,
 } from '../types';
 import { clampRating } from './playerUtils';
+import { parsePlayFrequencyLabel } from './playFrequency';
 
 export function getRemainingPlayerCount(captain: Captain): number {
   return SQUAD_SIZE - captain.squad.length;
@@ -242,6 +243,12 @@ export function parseCsvPlayers(csv: string): {
   const physicalIdx = header.findIndex((h) => h.includes('physical'));
   const paceIdx = header.findIndex((h) => h.includes('pace'));
   const staminaIdx = header.findIndex((h) => h.includes('stamina'));
+  const playFreqIdx = header.findIndex(
+    (h) =>
+      h.includes('play frequency') ||
+      h.includes('how frequently') ||
+      (h.includes('play') && h.includes('football')),
+  );
 
   const ratingIdx = header.findIndex((h) => h.includes('rating') || h.includes('last match'));
   const fitnessIdx = header.findIndex((h) => h.includes('fitness'));
@@ -256,6 +263,9 @@ export function parseCsvPlayers(csv: string): {
 
   const readRating = (cols: string[], idx: number, fallback: number) =>
     clampRating(Number(cols[idx] ?? fallback) || fallback);
+
+  const readPlayFrequency = (cols: string[], idx: number) =>
+    parsePlayFrequencyLabel(idx >= 0 ? cols[idx] ?? '' : '');
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',').map((c) => c.trim());
@@ -283,6 +293,7 @@ export function parseCsvPlayers(csv: string): {
         physical: readRating(cols, fitnessIdx, 3) * 2,
         pace: readRating(cols, ratingIdx, 3) * 2,
         stamina: readRating(cols, fitnessIdx, 3) * 2,
+        playFrequency: readPlayFrequency(cols, playFreqIdx),
       });
       continue;
     }
@@ -299,6 +310,7 @@ export function parseCsvPlayers(csv: string): {
       physical: readRating(cols, physicalIdx, 5),
       pace: readRating(cols, paceIdx, 5),
       stamina: readRating(cols, staminaIdx, 5),
+      playFrequency: readPlayFrequency(cols, playFreqIdx),
     });
   }
 

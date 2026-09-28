@@ -1,4 +1,5 @@
 import type { Position, Player, PlayerFormData, PlayerMark, PlayerSkill } from '../types';
+import { normalizePlayFrequency } from './playFrequency';
 
 export const RATING_MAX = 10;
 
@@ -56,6 +57,7 @@ export function createDefaultPlayerForm(): PlayerFormData {
     physical: 5,
     pace: 5,
     stamina: 5,
+    playFrequency: 'once_week',
   };
 }
 
@@ -85,6 +87,7 @@ export function normalizePlayer(
       physical: clampRating(raw.physical ?? 5),
       pace: clampRating(raw.pace ?? 5),
       stamina: clampRating(raw.stamina ?? 5),
+      playFrequency: normalizePlayFrequency(raw.playFrequency),
       imageUrl: raw.imageUrl?.trim() || undefined,
       soldToCaptainId: raw.soldToCaptainId,
       soldPrice: raw.soldPrice,
@@ -106,6 +109,7 @@ export function normalizePlayer(
     physical: scaleLegacyToTen(raw.fitness, base),
     pace: scaleLegacyToTen(raw.lastMatchRating, base),
     stamina: scaleLegacyToTen(raw.fitness, base),
+    playFrequency: normalizePlayFrequency(raw.playFrequency),
     imageUrl: raw.imageUrl?.trim() || undefined,
     soldToCaptainId: raw.soldToCaptainId,
     soldPrice: raw.soldPrice,

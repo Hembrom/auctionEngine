@@ -14,10 +14,7 @@ import {
   writeBatch,
   deleteField,
 } from 'firebase/firestore';
-import {
-  deletePlayerPhotoFile,
-  uploadPlayerPhoto,
-} from './playerImageStorage';
+import { deletePlayerPhotoFile, resolvePlayerImageUrl } from './playerImageStorage';
 import { db, COLLECTIONS, SUBCOLLECTIONS } from '../firebase';
 import type {
   AdminRoomSummary,
@@ -333,7 +330,7 @@ export async function deletePlayer(roomId: string, playerId: string) {
 }
 
 export async function setPlayerPhoto(roomId: string, playerId: string, file: File) {
-  const imageUrl = await uploadPlayerPhoto(roomId, playerId, file);
+  const imageUrl = await resolvePlayerImageUrl(roomId, playerId, file);
   await updateDoc(doc(roomPaths(roomId).players, playerId), { imageUrl });
 }
 

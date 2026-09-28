@@ -6,6 +6,8 @@ import {
   RATING_MAX,
   REGISTRATION_INTRO,
 } from '../lib/playerUtils';
+import { PLAY_FREQUENCY_OPTIONS } from '../lib/playFrequency';
+import type { PlayFrequency } from '../types';
 
 const ALL_POSITIONS: Position[] = ['GK', 'DEF', 'MID', 'ST'];
 
@@ -109,6 +111,24 @@ export function PlayerRegistrationForm({
           value={form.teammateGuidance}
           onChange={(v) => onChange({ ...form, teammateGuidance: v })}
         />
+      </fieldset>
+
+      <fieldset className="registration-fieldset">
+        <legend>How frequently do you play football?</legend>
+        <p className="muted registration-field-hint">Choose one option</p>
+        <div className="play-frequency-picker">
+          {PLAY_FREQUENCY_OPTIONS.map((opt) => (
+            <label key={opt.id} className="play-frequency-option">
+              <input
+                type="radio"
+                name="playFrequency"
+                checked={form.playFrequency === opt.id}
+                onChange={() => onChange({ ...form, playFrequency: opt.id as PlayFrequency })}
+              />
+              <span>{opt.label}</span>
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <fieldset className="registration-fieldset">

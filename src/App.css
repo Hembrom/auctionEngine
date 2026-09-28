@@ -389,18 +389,42 @@ button:disabled {
   height: 56px;
 }
 
-.player-photo-md .player-photo {
+.player-photo-md .player-photo,
+.player-photo-md .player-photo-empty {
   width: 100%;
   max-width: 280px;
   aspect-ratio: 4 / 5;
   max-height: 320px;
 }
 
-.player-photo-lg .player-photo {
+.player-photo-lg .player-photo,
+.player-photo-lg .player-photo-empty {
   width: 100%;
   max-width: 360px;
   aspect-ratio: 4 / 5;
   max-height: 420px;
+}
+
+.player-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(165deg, var(--bg) 0%, var(--surface) 100%);
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.player-photo-sm .player-photo-empty {
+  width: 56px;
+  height: 56px;
+}
+
+.player-avatar-placeholder-svg {
+  width: 55%;
+  height: 55%;
+  max-height: 100%;
 }
 
 .browse-player-card .browse-player-photo {
@@ -435,18 +459,6 @@ button:disabled {
 
 .admin-photo-preview .player-photo-wrap {
   margin-bottom: 0;
-}
-
-.admin-photo-placeholder {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius);
-  border: 1px dashed var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  font-size: 1.25rem;
 }
 
 .admin-photo-meta {
@@ -499,17 +511,68 @@ button:disabled {
   box-shadow: 0 0 0 1px var(--accent-dim);
 }
 
-.player-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
+.player-card-split {
+  display: grid;
+  grid-template-columns: 35% 1fr;
+  gap: 1.25rem 1.5rem;
+  align-items: start;
 }
 
-.player-header h2 {
-  font-size: 1.5rem;
+.player-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.player-card-left .player-photo-wrap {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.player-card-name {
+  font-size: 1.35rem;
+  line-height: 1.2;
+  margin: 0;
+  word-break: break-word;
+}
+
+.player-card-positions {
+  justify-content: center;
+}
+
+.player-card-right {
+  min-width: 0;
+}
+
+.skills-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+@media (max-width: 720px) {
+  .player-card-split {
+    grid-template-columns: 1fr;
+  }
+
+  .player-card-left {
+    flex-direction: row;
+    flex-wrap: wrap;
+    text-align: left;
+    align-items: center;
+  }
+
+  .player-card-left .player-photo-wrap {
+    width: auto;
+    flex: 0 0 88px;
+  }
+
+  .player-card-positions {
+    justify-content: flex-start;
+  }
 }
 
 .position-tags {
@@ -575,6 +638,42 @@ button:disabled {
 
 .skill-row .rating-label {
   min-width: 5.5rem;
+}
+
+.play-frequency-row .rating-label {
+  min-width: 6.5rem;
+}
+
+.play-frequency-value {
+  font-size: 0.65rem;
+  max-width: 5.5rem;
+  line-height: 1.15;
+  text-align: right;
+  white-space: normal;
+}
+
+.play-frequency-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.play-frequency-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.play-frequency-option input {
+  margin-top: 0.2rem;
+}
+
+.browse-skills-bars .play-frequency-row {
+  grid-column: 1 / -1;
+  margin-bottom: 0.25rem;
 }
 
 .registration-setup-grid {

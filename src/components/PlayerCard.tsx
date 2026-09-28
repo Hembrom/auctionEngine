@@ -1,5 +1,6 @@
 import type { Player } from '../types';
 import { PlayerPhoto } from './PlayerPhoto';
+import { PlayFrequencyBar } from './PlayFrequencyBar';
 import {
   PLAYER_SKILLS,
   PLAYER_SKILL_LABELS,
@@ -27,28 +28,31 @@ function SkillBar({ label, value, max = RATING_MAX }: { label: string; value: nu
 export function PlayerCard({ player, large }: PlayerCardProps) {
   return (
     <div className={`player-card ${large ? 'player-card-lg' : ''}`}>
-      <PlayerPhoto player={player} size={large ? 'lg' : 'md'} />
-      <div className="player-header">
-        <h2>{player.name}</h2>
-        <div className="position-tags">
-          {player.positions.map((p) => (
-            <span key={p} className={`pos-tag pos-${p.toLowerCase()}`}>
-              {p}
-            </span>
-          ))}
-        </div>
-      </div>
+      <div className="player-card-split">
+        <aside className="player-card-left">
+          <PlayerPhoto player={player} size={large ? 'lg' : 'md'} showPlaceholder />
+          <h2 className="player-card-name">{player.name}</h2>
+          <div className="position-tags player-card-positions">
+            {player.positions.map((p) => (
+              <span key={p} className={`pos-tag pos-${p.toLowerCase()}`}>
+                {p}
+              </span>
+            ))}
+          </div>
+        </aside>
 
-      <div className="player-skills-section">
-        <h3 className="player-skills-title">General Skills</h3>
-        <div className={`skills-grid ${large ? 'skills-grid-lg' : ''}`}>
-          {PLAYER_SKILLS.map((skill) => (
-            <SkillBar
-              key={skill}
-              label={PLAYER_SKILL_LABELS[skill]}
-              value={getPlayerSkillValue(player, skill)}
-            />
-          ))}
+        <div className="player-card-right">
+          <h3 className="player-skills-title">General Skills</h3>
+          <div className="skills-matrix">
+            <PlayFrequencyBar frequency={player.playFrequency} />
+            {PLAYER_SKILLS.map((skill) => (
+              <SkillBar
+                key={skill}
+                label={PLAYER_SKILL_LABELS[skill]}
+                value={getPlayerSkillValue(player, skill)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

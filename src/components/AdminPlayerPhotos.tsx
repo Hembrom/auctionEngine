@@ -44,7 +44,8 @@ function AdminPlayerPhotoRow({ roomId, player }: { roomId: string; player: Playe
     try {
       await setPlayerPhoto(roomId, player.id, file);
     } catch (e) {
-      setError((e as Error).message);
+      const msg = (e as Error).message || 'Upload failed.';
+      setError(msg);
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -68,13 +69,7 @@ function AdminPlayerPhotoRow({ roomId, player }: { roomId: string; player: Playe
   return (
     <li className="admin-photo-row">
       <div className="admin-photo-preview">
-        {player.imageUrl ? (
-          <PlayerPhoto player={player} size="sm" />
-        ) : (
-          <div className="admin-photo-placeholder" aria-hidden>
-            ?
-          </div>
-        )}
+        <PlayerPhoto player={player} size="sm" showPlaceholder />
       </div>
       <div className="admin-photo-meta">
         <strong>{player.name}</strong>

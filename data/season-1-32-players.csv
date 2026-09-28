@@ -1,33 +1,33 @@
-Name,Position,Dribbling,Shooting,Passing,Defending,Physical,Pace,Stamina
-Harry Kane,ST,8,10,9,3,10,7,8
-Kylian Mbappé,ST,10,10,8,3,9,10,9
-Erling Haaland,ST,7,10,7,3,9,10,9
-Lamine Yamal,ST,10,9,10,3,10,9,9
-Lautaro Martínez,ST,8,9,7,4,9,8,9
-Julián Álvarez,ST,9,9,8,4,9,9,9
-Mohamed Salah,ST,10,9,8,4,9,9,8
-Raphinha,ST,9,9,8,3,9,9,9
-Virgil van Dijk,DEF,6,5,9,10,10,8,9
-William Saliba,DEF,7,3,9,10,10,9,9
-Rúben Dias,DEF,5,3,8,10,10,7,9
-Antonio Rüdiger,DEF,5,4,7,10,9,8,9
-Alessandro Bastoni,DEF,7,4,10,9,10,8,9
-Pau Cubarsí,DEF,7,3,9,9,10,7,9
-Trent Alexander-Arnold,DEF,9,6,10,7,10,8,8
-Achraf Hakimi,DEF,9,7,9,8,9,10,10
-Rodri,MID,7,7,10,10,10,6,9
-Jude Bellingham,MID,9,9,9,8,10,9,10
-Kevin De Bruyne,MID,8,9,10,5,10,7,7
-Pedri,MID,10,7,10,6,10,8,8
-Federico Valverde,MID,8,8,9,8,9,10,10
-Martin Ødegaard,MID,9,8,10,5,10,7,8
-Declan Rice,MID,7,6,9,9,10,8,10
-Vitinha,MID,9,7,10,7,10,8,10
-Alisson Becker,GK,4,2,10,10,10,7,8
-Thibaut Courtois,GK,3,1,8,10,10,7,8
-Gianluigi Donnarumma,GK,3,1,8,10,10,8,9
-Emiliano Martínez,GK,3,1,8,10,9,7,8
-Mike Maignan,GK,4,1,9,10,10,8,9
-Marc-André ter Stegen,GK,3,1,10,9,10,7,8
-Jan Oblak,GK,2,1,8,10,10,7,8
-David Raya,GK,4,1,9,9,10,7,8
+Name,Position,Play Frequency,Dribbling,Shooting,Passing,Defending,Physical,Pace,Stamina
+Harry Kane,ST,Multiple Times a Week,8,10,9,3,10,7,8
+Kylian Mbappé,ST,Multiple Times a Week,10,10,8,3,9,10,9
+Erling Haaland,ST,Multiple Times a Week,7,10,7,3,9,10,9
+Lamine Yamal,ST,Multiple Times a Week,10,9,10,3,10,9,9
+Lautaro Martínez,ST,Multiple Times a Week,8,9,7,4,9,8,9
+Julián Álvarez,ST,Multiple Times a Week,9,9,8,4,9,9,9
+Mohamed Salah,ST,Multiple Times a Week,10,9,8,4,9,9,8
+Raphinha,ST,Multiple Times a Week,9,9,8,3,9,9,9
+Virgil van Dijk,DEF,Multiple Times a Week,6,5,9,10,10,8,9
+William Saliba,DEF,Multiple Times a Week,7,3,9,10,10,9,9
+Rúben Dias,DEF,Multiple Times a Week,5,3,8,10,10,7,9
+Antonio Rüdiger,DEF,Multiple Times a Week,5,4,7,10,9,8,9
+Alessandro Bastoni,DEF,Multiple Times a Week,7,4,10,9,10,8,9
+Pau Cubarsí,DEF,Multiple Times a Week,7,3,9,9,10,7,9
+Trent Alexander-Arnold,DEF,Multiple Times a Week,9,6,10,7,10,8,8
+Achraf Hakimi,DEF,Multiple Times a Week,9,7,9,8,9,10,10
+Rodri,MID,Multiple Times a Week,7,7,10,10,10,6,9
+Jude Bellingham,MID,Multiple Times a Week,9,9,9,8,10,9,10
+Kevin De Bruyne,MID,Multiple Times a Week,8,9,10,5,10,7,7
+Pedri,MID,Multiple Times a Week,10,7,10,6,10,8,8
+Federico Valverde,MID,Multiple Times a Week,8,8,9,8,9,10,10
+Martin Ødegaard,MID,Multiple Times a Week,9,8,10,5,10,7,8
+Declan Rice,MID,Multiple Times a Week,7,6,9,9,10,8,10
+Vitinha,MID,Multiple Times a Week,9,7,10,7,10,8,10
+Alisson Becker,GK,Multiple Times a Week,4,2,10,10,10,7,8
+Thibaut Courtois,GK,Multiple Times a Week,3,1,8,10,10,7,8
+Gianluigi Donnarumma,GK,Multiple Times a Week,3,1,8,10,10,8,9
+Emiliano Martínez,GK,Multiple Times a Week,3,1,8,10,9,7,8
+Mike Maignan,GK,Multiple Times a Week,4,1,9,10,10,8,9
+Marc-André ter Stegen,GK,Multiple Times a Week,3,1,10,9,10,7,8
+Jan Oblak,GK,Multiple Times a Week,2,1,8,10,10,7,8
+David Raya,GK,Multiple Times a Week,4,1,9,9,10,7,8

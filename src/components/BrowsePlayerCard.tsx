@@ -1,5 +1,6 @@
 import type { Player, PlayerMark } from '../types';
 import { PlayerPhoto } from './PlayerPhoto';
+import { PlayFrequencyBar } from './PlayFrequencyBar';
 import {
   getOverallRating,
   PLAYER_MARKS,
@@ -32,7 +33,7 @@ export function BrowsePlayerCard({
 
   return (
     <article className={`card browse-player-card ${shortlisted ? 'browse-player-shortlisted' : ''}`}>
-      <PlayerPhoto player={player} size="sm" className="browse-player-photo" />
+      <PlayerPhoto player={player} size="sm" className="browse-player-photo" showPlaceholder />
       <div className="browse-player-top">
         <div>
           <h3>{player.name}</h3>
@@ -51,7 +52,8 @@ export function BrowsePlayerCard({
         </div>
       </div>
 
-      <div className="browse-skills">
+      <div className="browse-skills browse-skills-bars">
+        <PlayFrequencyBar frequency={player.playFrequency} />
         {PLAYER_SKILLS.map((skill) => (
           <div key={skill} className="browse-skill">
             <span>{PLAYER_SKILL_LABELS[skill]}</span>

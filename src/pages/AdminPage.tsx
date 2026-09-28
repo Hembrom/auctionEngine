@@ -414,8 +414,10 @@ export function AdminPage() {
                 <div>
                   <h4>Upload CSV</h4>
                   <p className="muted">
-                    Columns: Name, Position, Organizing Comfort, Teammate Guidance, Dribbling,
-                    Shooting, Passing, Defending, Physical, Pace, Stamina (all ratings 1–10)
+                    Columns: Name, Position, Play Frequency, Dribbling, Shooting, Passing,
+                    Defending, Physical (Game Understanding), Pace, Stamina (ratings 1–10). Play
+                    Frequency: Multiple Times a Week, Once a Week, Once a Month, Occasionally, or
+                    Never Played
                   </p>
                   <input type="file" accept=".csv" onChange={handleCsvUpload} />
                   {csvError && <p className="error">{csvError}</p>}

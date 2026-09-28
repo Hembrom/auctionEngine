@@ -22,6 +22,14 @@ export type PlayerSkill =
   | 'pace'
   | 'stamina';
 
+/** How frequently the player plays football (single choice). */
+export type PlayFrequency =
+  | 'multiple_week'
+  | 'once_week'
+  | 'once_month'
+  | 'occasionally'
+  | 'never';
+
 export interface Player {
   id: string;
   name: string;
@@ -39,6 +47,7 @@ export interface Player {
   physical: number;
   pace: number;
   stamina: number;
+  playFrequency: PlayFrequency;
   status: PlayerStatus;
   soldToCaptainId?: string;
   soldPrice?: number;
@@ -140,6 +149,7 @@ export interface PlayerFormData {
   physical: number;
   pace: number;
   stamina: number;
+  playFrequency: PlayFrequency;
 }
 
 export const SQUAD_SIZE = 7;
