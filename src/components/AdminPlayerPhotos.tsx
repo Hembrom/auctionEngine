@@ -16,8 +16,8 @@ export function AdminPlayerPhotos({ roomId, players }: AdminPlayerPhotosProps) {
     <section className="card admin-wide admin-player-photos">
       <h3>Player photos ({sorted.filter((p) => p.imageUrl).length}/{sorted.length} set)</h3>
       <p className="muted">
-        Upload a headshot for each player (JPEG, PNG, or WebP, max 5 MB). Photos appear on the live
-        auction card and player browser.
+        Upload a headshot for each player (JPEG, PNG, or WebP, max 5 MB). Saves to your room
+        database automatically — Firebase Storage is optional.
       </p>
       <ul className="admin-photo-list">
         {sorted.map((player) => (
@@ -80,7 +80,7 @@ function AdminPlayerPhotoRow({ roomId, player }: { roomId: string; player: Playe
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/*"
           className="admin-photo-file-input"
           disabled={busy}
           onChange={(e) => {
@@ -89,7 +89,7 @@ function AdminPlayerPhotoRow({ roomId, player }: { roomId: string; player: Playe
           }}
         />
         <button type="button" disabled={busy} onClick={() => inputRef.current?.click()}>
-          {busy ? 'Uploading…' : player.imageUrl ? 'Replace' : 'Upload'}
+          {busy ? 'Saving…' : player.imageUrl ? 'Replace' : 'Upload'}
         </button>
         {player.imageUrl && (
           <button type="button" className="btn-small" disabled={busy} onClick={() => void handleRemove()}>

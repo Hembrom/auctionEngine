@@ -331,7 +331,15 @@ export async function deletePlayer(roomId: string, playerId: string) {
 
 export async function setPlayerPhoto(roomId: string, playerId: string, file: File) {
   const imageUrl = await resolvePlayerImageUrl(roomId, playerId, file);
-  await updateDoc(doc(roomPaths(roomId).players, playerId), { imageUrl });
+  try {
+    await updateDoc(doc(roomPaths(roomId).players, playerId), { imageUrl });
+  } catch (err) {
+    const msg = (err as Error).message || '';
+    if (msg.includes('permission') || msg.includes('PERMISSION_DENIED')) {
+      throw new Error('Could not save photo: Firestore permission denied for this room.');
+    }
+    throw err;
+  }
 }
 
 export async function clearPlayerPhoto(roomId: string, playerId: string) {
