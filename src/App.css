@@ -640,16 +640,30 @@ button:disabled {
   min-width: 5.5rem;
 }
 
-.play-frequency-row .rating-label {
-  min-width: 6.5rem;
+.play-frequency-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.play-frequency-value {
-  font-size: 0.65rem;
-  max-width: 5.5rem;
-  line-height: 1.15;
-  text-align: right;
-  white-space: normal;
+.play-frequency-field-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.play-frequency-choice {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.play-frequency-bar {
+  width: 100%;
 }
 
 .play-frequency-picker {
@@ -671,9 +685,8 @@ button:disabled {
   margin-top: 0.2rem;
 }
 
-.browse-skills-bars .play-frequency-row {
+.browse-skills-bars .play-frequency-block {
   grid-column: 1 / -1;
-  margin-bottom: 0.25rem;
 }
 
 .registration-setup-grid {
