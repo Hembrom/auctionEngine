@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { HomePage, RoomGuard } from './pages/HomePage';
 import { AdminLoginPage } from './pages/AdminLoginPage';
+import { AdminCreateRoomPage } from './pages/AdminCreateRoomPage';
 import { CaptainLoginPage } from './pages/CaptainLoginPage';
 import { JoinPage } from './pages/JoinPage';
 import { WaitingPage } from './pages/WaitingPage';
@@ -24,6 +25,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/create" element={<AdminCreateRoomPage />} />
         <Route path="/login/admin" element={<AdminLoginPage />} />
 
         <Route

@@ -1,78 +1,56 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
-import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
-import { createRoom, roomExists } from '../lib/auctionService';
-import { slugifyRoomName } from '../lib/roomUtils';
-import { setAdminId } from '../hooks/useSession';
+import { FirebaseBanner } from '../components/FirebaseBanner';
+import { LoginForm } from '../components/LoginForm';
+import { roomExists } from '../lib/auctionService';
 import { useAuth } from '../context/AuthContext';
-import { AuthUserBar } from '../components/AuthUserBar';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = params.get('next');
   const { user, loading: authLoading } = useAuth();
-  const [createName, setCreateName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const createSlug = slugifyRoomName(createName);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!createName.trim()) return;
-    if (!user) {
-      navigate(`/login/admin?next=${encodeURIComponent('/')}`);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    if (next && next !== '/') {
+      navigate(next, { replace: true });
       return;
     }
-    setLoading(true);
-    setError('');
-    try {
-      const roomId = await createRoom(createName.trim(), user.uid);
-      setAdminId(roomId, user.uid);
-      navigate(`/room/${roomId}/admin`);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+    navigate('/create', { replace: true });
+  }, [authLoading, user, next, navigate]);
+
+  const handleLoginSuccess = () => {
+    if (next && next !== '/') {
+      navigate(next, { replace: true });
+    } else {
+      navigate('/create', { replace: true });
     }
   };
 
-  return (
-    <Layout title="Football Auction" subtitle="Create an auction room">
-      <FirebaseBanner />
-      <FirebaseErrorBanner error={error.includes('Firestore') ? error : null} />
-      <AuthUserBar />
-
-      <div className="home-admin-card">
-        <div className="card">
-          <h3>Create Room (Admin)</h3>
-          <p className="muted">Start a new auction. Your account owns the room.</p>
-          {!authLoading && !user ? (
-            <div className="home-auth-cta">
-              <Link to="/login/admin" className="btn-primary home-auth-link">
-                Admin sign in
-              </Link>
-              <p className="muted">Sign in or create an admin account, then create your room.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleCreate} className="join-form">
-              <label htmlFor="create">Room Name</label>
-              <input
-                id="create"
-                placeholder="e.g. Friday Night Auction"
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-              />
-              {createSlug && <p className="muted">URL: /room/{createSlug}</p>}
-              <button type="submit" disabled={loading || !createName.trim() || !user}>
-                {loading ? 'Creating...' : 'Create & Open Admin'}
-              </button>
-            </form>
-          )}
+  if (authLoading || user) {
+    return (
+      <Layout title="Football Auction" subtitle="Loading…" theme="admin">
+        <FirebaseBanner />
+        <div className="card center-card">
+          <p className="muted">Loading…</p>
         </div>
-      </div>
+      </Layout>
+    );
+  }
 
-      {error && !error.includes('Firestore') && <p className="error center-error">{error}</p>}
+  return (
+    <Layout title="Football Auction" subtitle="Admin sign in" theme="admin">
+      <FirebaseBanner />
+      <div className="auth-page-single">
+        <LoginForm
+          role="admin"
+          title="Sign in"
+          subtitle="Use your email and password, or create an account."
+          onSuccess={handleLoginSuccess}
+        />
+      </div>
     </Layout>
   );
 }

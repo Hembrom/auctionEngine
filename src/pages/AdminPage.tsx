@@ -237,7 +237,7 @@ export function AdminPage() {
   if (needsFirebaseLogin) {
     return (
       <Navigate
-        to={`/login/admin?next=${encodeURIComponent(`/room/${roomId}/admin`)}`}
+        to={`/?next=${encodeURIComponent(`/room/${roomId}/admin`)}`}
         replace
       />
     );
