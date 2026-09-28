@@ -1,7 +1,7 @@
 # Football Auction
 
 Real-time, multi-device web app for conducting an internal company football player auction. Captains join from their phones or laptops, the admin runs the auction from a control panel, and every screen stays in sync via Firebase.
-
+ 
 ## Tech Stack
 
 - **Frontend:** React + TypeScript (Vite)
