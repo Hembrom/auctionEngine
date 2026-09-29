@@ -568,12 +568,9 @@ button:disabled {
 .player-card-left .player-photo-wrap:not(:has(.player-photo-empty))::after {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 45%;
+  inset: 0;
   pointer-events: none;
-  background: linear-gradient(to bottom, transparent 0%, var(--surface) 92%);
+  background: linear-gradient(to bottom, transparent 0%, transparent 55%, var(--surface) 96%);
 }
 
 .player-overall-badge {
