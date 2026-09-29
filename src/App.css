@@ -608,8 +608,22 @@ button:disabled {
   position: relative;
 }
 
+/* Keep the same frame footprint as a real photo so the overlap/layout doesn't collapse. */
 .fifa-photo-frame .player-photo-wrap:has(.player-photo-empty) {
-  width: auto;
+  width: 100%;
+}
+
+.fifa-photo-frame .player-photo-empty {
+  width: 100%;
+  max-width: 360px;
+  max-height: 420px;
+  aspect-ratio: 4 / 5;
+  margin: 0 auto;
+}
+
+.fifa-photo-frame .player-avatar-placeholder-svg {
+  width: 35%;
+  height: 35%;
 }
 
 /* Fade the bottom 30% of the photo to true transparency so it blends with what overlaps it. */
