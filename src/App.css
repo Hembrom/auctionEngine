@@ -558,6 +558,14 @@ button:disabled {
   width: auto;
 }
 
+/* Fade the photo edges into the card surface instead of a boxed image. */
+.player-card-left .player-photo:not(.player-photo-empty) {
+  border: none;
+  background: transparent;
+  -webkit-mask-image: linear-gradient(to bottom, black 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 72%, transparent 100%);
+}
+
 .player-overall-badge {
   display: flex;
   flex-direction: column;
