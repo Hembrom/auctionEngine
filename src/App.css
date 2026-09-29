@@ -602,6 +602,11 @@ button:disabled {
   margin-bottom: clamp(-90px, -22vw, -60px);
 }
 
+/* No photo: leave the placeholder space alone, don't overlap it with name/stats. */
+.fifa-photo-frame:has(.player-photo-empty) {
+  margin-bottom: 1rem;
+}
+
 .fifa-photo-frame .player-photo-wrap {
   margin-bottom: 0;
   width: 100%;
@@ -615,6 +620,7 @@ button:disabled {
 
 .fifa-photo-frame .player-photo-empty {
   width: 100%;
+  height: auto;
   max-width: 360px;
   max-height: 420px;
   aspect-ratio: 4 / 5;
