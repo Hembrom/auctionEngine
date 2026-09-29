@@ -533,39 +533,39 @@ button:disabled {
   box-shadow: 0 0 0 1px var(--accent-dim);
 }
 
-.player-card-split {
-  display: grid;
-  grid-template-columns: 35% 1fr;
-  gap: 1.25rem 1.5rem;
-  align-items: start;
-}
-
-.player-card-left {
+/* FIFA-style single-panel card: photo bleeds into the top, stats below. */
+.player-card-fifa {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.5rem;
-  min-width: 0;
+  background: linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%);
 }
 
-.player-card-left .player-photo-wrap {
+.fifa-photo-frame {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.fifa-photo-frame .player-photo-wrap {
   margin-bottom: 0;
   width: 100%;
   position: relative;
 }
 
-.player-card-left .player-photo-wrap:has(.player-photo-empty) {
+.fifa-photo-frame .player-photo-wrap:has(.player-photo-empty) {
   width: auto;
 }
 
 /* Fade the photo edges into the card surface instead of a boxed image. */
-.player-card-left .player-photo:not(.player-photo-empty) {
+.fifa-photo-frame .player-photo:not(.player-photo-empty) {
   border: none;
   background: transparent;
 }
 
-.player-card-left .player-photo-wrap:not(:has(.player-photo-empty))::after {
+.fifa-photo-frame .player-photo-wrap:not(:has(.player-photo-empty))::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -573,102 +573,98 @@ button:disabled {
   background: linear-gradient(to bottom, transparent 0%, transparent 55%, var(--surface) 96%);
 }
 
-.player-overall-badge {
+.fifa-rating-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  padding: 0.35rem 0.65rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--accent-dim);
-  background: var(--bg);
-}
-
-.player-overall-value {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: var(--accent);
+  align-items: flex-start;
   line-height: 1;
 }
 
-.player-overall-label {
-  font-size: 0.65rem;
+.fifa-overall {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.fifa-position {
+  margin-top: 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
+  letter-spacing: 0.03em;
 }
 
 .player-card-name {
   font-size: 1.35rem;
   line-height: 1.2;
-  margin: 0;
+  margin: 0.5rem 0 0;
   word-break: break-word;
 }
 
-.player-card-positions {
+.fifa-positions {
   justify-content: center;
+  margin-top: 0.4rem;
 }
 
-.player-frequency-badge {
+.fifa-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1.5rem;
+  width: 100%;
+  max-width: 320px;
+  margin: 0.9rem auto 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.fifa-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.fifa-stat-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.fifa-stat-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.fifa-frequency-row {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.1rem;
+  margin-top: 0.9rem;
   padding: 0.3rem 0.6rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--bg);
 }
 
-.player-frequency-label {
+.fifa-frequency-label {
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
 }
 
-.player-frequency-value {
+.fifa-frequency-value {
   font-size: 0.85rem;
   font-weight: 600;
   line-height: 1.2;
-  text-align: center;
-}
-
-.player-card-right {
-  min-width: 0;
-}
-
-.skills-matrix {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.skills-matrix .rating-row {
-  min-height: 2.125rem;
-  align-items: center;
-}
-
-@media (max-width: 720px) {
-  .player-card-split {
-    grid-template-columns: 1fr;
-  }
-
-  .player-card-left {
-    flex-direction: row;
-    flex-wrap: wrap;
-    text-align: left;
-    align-items: center;
-  }
-
-  .player-card-left .player-photo-wrap {
-    width: auto;
-    flex: 0 0 88px;
-  }
-
-  .player-card-positions {
-    justify-content: flex-start;
-  }
 }
 
 .position-tags {
