@@ -552,6 +552,7 @@ button:disabled {
 .player-card-left .player-photo-wrap {
   margin-bottom: 0;
   width: 100%;
+  position: relative;
 }
 
 .player-card-left .player-photo-wrap:has(.player-photo-empty) {
@@ -562,8 +563,17 @@ button:disabled {
 .player-card-left .player-photo:not(.player-photo-empty) {
   border: none;
   background: transparent;
-  -webkit-mask-image: linear-gradient(to bottom, black 72%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 72%, transparent 100%);
+}
+
+.player-card-left .player-photo-wrap:not(:has(.player-photo-empty))::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 45%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0%, var(--surface) 92%);
 }
 
 .player-overall-badge {
