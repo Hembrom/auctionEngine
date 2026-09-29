@@ -549,15 +549,48 @@ button:disabled {
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  border: 2px solid transparent;
-  border-radius: 20px;
-  background:
-    linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%) padding-box,
-    linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 45%, var(--accent) 100%) border-box;
+  position: relative;
+  border: 3px solid transparent;
+  border-radius: 22px;
+  background-image:
+    radial-gradient(circle, #fff6d8 0%, rgba(255, 246, 216, 0) 70%),
+    radial-gradient(circle, #fff6d8 0%, rgba(255, 246, 216, 0) 70%),
+    radial-gradient(circle, #fff6d8 0%, rgba(255, 246, 216, 0) 70%),
+    radial-gradient(circle, #fff6d8 0%, rgba(255, 246, 216, 0) 70%),
+    linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%),
+    linear-gradient(135deg, #f6e27a 0%, #b8860b 28%, #fff3c4 50%, #b8860b 72%, #f6e27a 100%);
+  background-position:
+    7px 7px,
+    calc(100% - 7px) 7px,
+    7px calc(100% - 7px),
+    calc(100% - 7px) calc(100% - 7px),
+    0 0,
+    0 0;
+  background-size:
+    14px 14px,
+    14px 14px,
+    14px 14px,
+    14px 14px,
+    auto,
+    auto;
+  background-repeat: no-repeat;
+  background-origin: border-box, border-box, border-box, border-box, padding-box, border-box;
+  background-clip: border-box, border-box, border-box, border-box, padding-box, border-box;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.35),
     0 16px 32px -18px rgba(0, 0, 0, 0.65),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    0 0 22px -4px var(--accent-dim),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Thin inner hairline that echoes the outer gold ring, like a FIFA card frame. */
+.player-card-fifa::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255, 243, 196, 0.35);
+  border-radius: 16px;
+  pointer-events: none;
 }
 
 .fifa-photo-frame {
@@ -600,14 +633,14 @@ button:disabled {
 }
 
 .fifa-overall {
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 800;
   color: var(--accent);
 }
 
 .fifa-position {
   margin-top: 0;
-  font-size: 1rem;
+  font-size: 3rem;
   font-weight: 800;
   color: var(--accent);
   text-transform: uppercase;
