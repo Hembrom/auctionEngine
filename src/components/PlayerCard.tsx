@@ -22,7 +22,10 @@ const STAT_ORDER: { skill: PlayerSkill; code: string }[] = [
 export function PlayerCard({ player, large }: PlayerCardProps) {
   const overall = getOverallRating(player);
   const { label: frequencyLabel } = getPlayFrequencyOption(player.playFrequency);
-  const primaryPosition = player.positions[0];
+  const positionLabel = player.positions.join('/');
+  // Shrink the badge text as it gets longer (e.g. "GK/MID") so it never overflows the corner.
+  const positionSizeClass =
+    positionLabel.length > 6 ? 'fifa-position-xs' : positionLabel.length > 3 ? 'fifa-position-sm' : '';
 
   return (
     <div className="player-card-fifa-wrap">
@@ -30,7 +33,7 @@ export function PlayerCard({ player, large }: PlayerCardProps) {
         <div className="fifa-photo-frame">
           <div className="fifa-rating-badge">
             <span className="fifa-overall">{overall}</span>
-            {primaryPosition && <span className="fifa-position">{primaryPosition}</span>}
+            {positionLabel && <span className={`fifa-position ${positionSizeClass}`}>{positionLabel}</span>}
           </div>
           <PlayerPhoto player={player} size={large ? 'lg' : 'md'} showPlaceholder />
         </div>
