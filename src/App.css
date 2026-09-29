@@ -557,6 +557,8 @@ button:disabled {
   width: 100%;
   display: flex;
   justify-content: center;
+  /* Pull the name/stats up so they overlap the photo's faded bottom 30%. */
+  margin-bottom: clamp(-90px, -22vw, -60px);
 }
 
 .fifa-photo-frame .player-photo-wrap {
@@ -569,18 +571,12 @@ button:disabled {
   width: auto;
 }
 
-/* Fade the photo edges into the card surface instead of a boxed image. */
+/* Fade the bottom 30% of the photo to true transparency so it blends with what overlaps it. */
 .fifa-photo-frame .player-photo:not(.player-photo-empty) {
   border: none;
   background: transparent;
-}
-
-.fifa-photo-frame .player-photo-wrap:not(:has(.player-photo-empty))::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(to bottom, transparent 0%, transparent 55%, var(--surface) 96%);
+  -webkit-mask-image: linear-gradient(to bottom, white 0%, white 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, white 0%, white 70%, transparent 100%);
 }
 
 .fifa-rating-badge {
@@ -595,7 +591,7 @@ button:disabled {
 }
 
 .fifa-overall {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: var(--accent);
 }
@@ -610,6 +606,8 @@ button:disabled {
 }
 
 .player-card-name {
+  position: relative;
+  z-index: 1;
   font-size: 1.35rem;
   line-height: 1.2;
   margin: 0.5rem 0 0;
@@ -617,12 +615,9 @@ button:disabled {
   text-transform: uppercase;
 }
 
-.fifa-positions {
-  justify-content: center;
-  margin-top: 0.4rem;
-}
-
 .fifa-stats-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem 1.5rem;
