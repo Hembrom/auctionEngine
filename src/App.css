@@ -533,12 +533,22 @@ button:disabled {
   box-shadow: 0 0 0 1px var(--accent-dim);
 }
 
+/* Wraps the card + the frequency pill rendered below its boundary. */
+.player-card-fifa-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* FIFA-style single-panel card: photo bleeds into the top, stats below. */
 .player-card-fifa {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
   background: linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%);
 }
 
@@ -592,8 +602,9 @@ button:disabled {
 
 .fifa-position {
   margin-top: 0.15rem;
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -603,6 +614,7 @@ button:disabled {
   line-height: 1.2;
   margin: 0.5rem 0 0;
   word-break: break-word;
+  text-transform: uppercase;
 }
 
 .fifa-positions {
@@ -647,7 +659,7 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   gap: 0.1rem;
-  margin-top: 0.9rem;
+  margin-top: 0.75rem;
   padding: 0.3rem 0.6rem;
   border-radius: var(--radius);
   border: 1px solid var(--border);

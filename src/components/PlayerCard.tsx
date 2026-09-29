@@ -25,31 +25,33 @@ export function PlayerCard({ player, large }: PlayerCardProps) {
   const primaryPosition = player.positions[0];
 
   return (
-    <div className={`player-card player-card-fifa ${large ? 'player-card-lg' : ''}`}>
-      <div className="fifa-photo-frame">
-        <div className="fifa-rating-badge">
-          <span className="fifa-overall">{overall}</span>
-          {primaryPosition && <span className="fifa-position">{primaryPosition}</span>}
-        </div>
-        <PlayerPhoto player={player} size={large ? 'lg' : 'md'} showPlaceholder />
-      </div>
-
-      <h2 className="player-card-name">{player.name}</h2>
-      <div className="position-tags fifa-positions">
-        {player.positions.map((p) => (
-          <span key={p} className={`pos-tag pos-${p.toLowerCase()}`}>
-            {p}
-          </span>
-        ))}
-      </div>
-
-      <div className="fifa-stats-grid">
-        {STAT_ORDER.map(({ skill, code }) => (
-          <div className="fifa-stat" key={skill}>
-            <span className="fifa-stat-value">{ratingToScore100(getPlayerSkillValue(player, skill))}</span>
-            <span className="fifa-stat-label">{code}</span>
+    <div className="player-card-fifa-wrap">
+      <div className={`player-card player-card-fifa ${large ? 'player-card-lg' : ''}`}>
+        <div className="fifa-photo-frame">
+          <div className="fifa-rating-badge">
+            <span className="fifa-overall">{overall}</span>
+            {primaryPosition && <span className="fifa-position">{primaryPosition}</span>}
           </div>
-        ))}
+          <PlayerPhoto player={player} size={large ? 'lg' : 'md'} showPlaceholder />
+        </div>
+
+        <h2 className="player-card-name">{player.name}</h2>
+        <div className="position-tags fifa-positions">
+          {player.positions.map((p) => (
+            <span key={p} className={`pos-tag pos-${p.toLowerCase()}`}>
+              {p}
+            </span>
+          ))}
+        </div>
+
+        <div className="fifa-stats-grid">
+          {STAT_ORDER.map(({ skill, code }) => (
+            <div className="fifa-stat" key={skill}>
+              <span className="fifa-stat-value">{ratingToScore100(getPlayerSkillValue(player, skill))}</span>
+              <span className="fifa-stat-label">{code}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="fifa-frequency-row" aria-label={`Play frequency ${frequencyLabel}`}>
