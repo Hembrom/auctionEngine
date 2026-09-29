@@ -1,6 +1,6 @@
 import type { Player } from '../types';
 import { PlayerPhoto } from './PlayerPhoto';
-import { PlayFrequencyBar } from './PlayFrequencyBar';
+import { getPlayFrequencyOption } from '../lib/playFrequency';
 import {
   PLAYER_SKILLS,
   PLAYER_SKILL_LABELS,
@@ -28,6 +28,7 @@ function SkillBar({ label, value, max = RATING_MAX }: { label: string; value: nu
 
 export function PlayerCard({ player, large }: PlayerCardProps) {
   const overall = getOverallRating(player);
+  const { label: frequencyLabel } = getPlayFrequencyOption(player.playFrequency);
 
   return (
     <div className={`player-card ${large ? 'player-card-lg' : ''}`}>
@@ -46,12 +47,15 @@ export function PlayerCard({ player, large }: PlayerCardProps) {
               </span>
             ))}
           </div>
+          <div className="player-frequency-badge" aria-label={`Play frequency ${frequencyLabel}`}>
+            <span className="player-frequency-label">Play Frequency</span>
+            <span className="player-frequency-value">{frequencyLabel}</span>
+          </div>
         </aside>
 
         <div className="player-card-right">
           <h3 className="player-skills-title">General Skills</h3>
           <div className="skills-matrix">
-            <PlayFrequencyBar frequency={player.playFrequency} />
             {PLAYER_SKILLS.map((skill) => (
               <SkillBar
                 key={skill}
