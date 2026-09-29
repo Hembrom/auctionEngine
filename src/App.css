@@ -549,7 +549,15 @@ button:disabled {
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  background: linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%);
+  border: 2px solid transparent;
+  border-radius: 20px;
+  background:
+    linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%) padding-box,
+    linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 45%, var(--accent) 100%) border-box;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 16px 32px -18px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .fifa-photo-frame {
@@ -581,13 +589,14 @@ button:disabled {
 
 .fifa-rating-badge {
   position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
+  top: 0.3rem;
+  left: 0.3rem;
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  line-height: 1;
+  gap: 0;
+  line-height: 0.95;
 }
 
 .fifa-overall {
@@ -597,7 +606,7 @@ button:disabled {
 }
 
 .fifa-position {
-  margin-top: 0.15rem;
+  margin-top: 0;
   font-size: 1rem;
   font-weight: 800;
   color: var(--accent);

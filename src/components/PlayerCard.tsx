@@ -36,13 +36,6 @@ export function PlayerCard({ player, large }: PlayerCardProps) {
         </div>
 
         <h2 className="player-card-name">{player.name}</h2>
-        <div className="position-tags fifa-positions">
-          {player.positions.map((p) => (
-            <span key={p} className={`pos-tag pos-${p.toLowerCase()}`}>
-              {p}
-            </span>
-          ))}
-        </div>
 
         <div className="fifa-stats-grid">
           {STAT_ORDER.map(({ skill, code }) => (
