@@ -4,9 +4,9 @@ import { getPlayFrequencyOption } from '../lib/playFrequency';
 import {
   PLAYER_SKILLS,
   PLAYER_SKILL_LABELS,
-  RATING_MAX,
   getOverallRating,
   getPlayerSkillValue,
+  ratingToScore100,
 } from '../lib/playerUtils';
 
 interface PlayerCardProps {
@@ -14,14 +14,15 @@ interface PlayerCardProps {
   large?: boolean;
 }
 
-function SkillBar({ label, value, max = RATING_MAX }: { label: string; value: number; max?: number }) {
+function SkillBar({ label, value }: { label: string; value: number }) {
+  const score100 = ratingToScore100(value);
   return (
     <div className="rating-row skill-row">
       <span className="rating-label">{label}</span>
       <div className="rating-bar">
-        <div className="rating-fill" style={{ width: `${(value / max) * 100}%` }} />
+        <div className="rating-fill" style={{ width: `${score100}%` }} />
       </div>
-      <span className="rating-value">{value}/{max}</span>
+      <span className="rating-value">{score100}/100</span>
     </div>
   );
 }
