@@ -1,15 +1,6 @@
 import type { Player, PlayerMark } from '../types';
-import { PlayerPhoto } from './PlayerPhoto';
-import { PlayFrequencyBar } from './PlayFrequencyBar';
-import {
-  getOverallRating,
-  PLAYER_MARKS,
-  PLAYER_MARK_LABELS,
-  PLAYER_SKILL_LABELS,
-  PLAYER_SKILLS,
-  getPlayerSkillValue,
-  ratingToScore100,
-} from '../lib/playerUtils';
+import { PlayerCard } from './PlayerCard';
+import { PLAYER_MARKS, PLAYER_MARK_LABELS } from '../lib/playerUtils';
 
 interface BrowsePlayerCardProps {
   player: Player;
@@ -30,42 +21,11 @@ export function BrowsePlayerCard({
   onToggleShortlist,
   onToggleMark,
 }: BrowsePlayerCardProps) {
-  const overall = getOverallRating(player);
-
   return (
-    <article className={`card browse-player-card ${shortlisted ? 'browse-player-shortlisted' : ''}`}>
-      <PlayerPhoto player={player} size="sm" className="browse-player-photo" showPlaceholder />
-      <div className="browse-player-top">
-        <div>
-          <h3>{player.name}</h3>
-          <div className="position-tags">
-            {player.positions.map((p) => (
-              <span key={p} className={`pos-tag pos-${p.toLowerCase()}`}>
-                {p}
-              </span>
-            ))}
-            <span className={`status-pill status-${player.status}`}>{player.status}</span>
-          </div>
-        </div>
-        <div className="browse-overall">
-          <span className="browse-overall-value">{overall}</span>
-          <span className="muted">Overall /100</span>
-        </div>
-      </div>
-
-      <div className="browse-skills browse-skills-bars">
-        <PlayFrequencyBar frequency={player.playFrequency} />
-        {PLAYER_SKILLS.map((skill) => (
-          <div key={skill} className="browse-skill-rating">
-            <div className="browse-skill-rating-head">
-              <span>{PLAYER_SKILL_LABELS[skill]}</span>
-              <strong>{getPlayerSkillValue(player, skill)}</strong>
-            </div>
-            <div className="browse-skill-rating-bar" aria-label={`${PLAYER_SKILL_LABELS[skill]}: ${ratingToScore100(getPlayerSkillValue(player, skill))}%`}>
-              <span style={{ width: `${ratingToScore100(getPlayerSkillValue(player, skill))}%` }} />
-            </div>
-          </div>
-        ))}
+    <article className={`browse-player-card ${shortlisted ? 'browse-player-shortlisted' : ''}`}>
+      <PlayerCard player={player} />
+      <div className="browse-player-meta">
+        <span className={`status-pill status-${player.status}`}>{player.status}</span>
       </div>
 
       {canShortlist && (
