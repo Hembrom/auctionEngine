@@ -12,6 +12,7 @@ import { FinalPage } from './pages/FinalPage';
 import { AdminPage, AdminAuctionPage } from './pages/AdminPage';
 import { SpectatorPage } from './pages/SpectatorPage';
 import { PlayersPage } from './pages/PlayersPage';
+import { CaptainAuctionFaqPage } from './pages/CaptainAuctionFaqPage';
 import './App.css';
 
 function RoomRoute({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/blog/captain-auction-faq" element={<CaptainAuctionFaqPage />} />
         <Route path="/create" element={<AdminCreateRoomPage />} />
         <Route path="/login/admin" element={<AdminLoginPage />} />
 

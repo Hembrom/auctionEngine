@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner } from '../components/FirebaseBanner';
 import { LoginForm } from '../components/LoginForm';
@@ -50,6 +50,9 @@ export function HomePage() {
           subtitle="Use your email and password, or create an account."
           onSuccess={handleLoginSuccess}
         />
+        <p className="public-info-link">
+          <Link to="/blog/captain-auction-faq">Read the Captain Auction FAQ</Link>
+        </p>
       </div>
     </Layout>
   );
