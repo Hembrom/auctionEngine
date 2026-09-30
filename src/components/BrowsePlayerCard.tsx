@@ -26,6 +26,11 @@ export function BrowsePlayerCard({
       <PlayerCard player={player} />
       <div className="browse-player-meta">
         <span className={`status-pill status-${player.status}`}>{player.status}</span>
+        {player.isCaptain && (
+          <span className="captain-player-mark" title="Selected captain">
+            (C)
+          </span>
+        )}
       </div>
 
       {canShortlist && (

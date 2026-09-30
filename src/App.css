@@ -2735,6 +2735,15 @@ button:disabled {
 .browse-player-meta {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.captain-player-mark {
+  color: #f0c94e;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .browse-actions {
