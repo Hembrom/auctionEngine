@@ -8,6 +8,7 @@ import {
   PLAYER_SKILL_LABELS,
   PLAYER_SKILLS,
   getPlayerSkillValue,
+  ratingToScore100,
 } from '../lib/playerUtils';
 
 interface BrowsePlayerCardProps {
@@ -55,9 +56,14 @@ export function BrowsePlayerCard({
       <div className="browse-skills browse-skills-bars">
         <PlayFrequencyBar frequency={player.playFrequency} />
         {PLAYER_SKILLS.map((skill) => (
-          <div key={skill} className="browse-skill">
-            <span>{PLAYER_SKILL_LABELS[skill]}</span>
-            <strong>{getPlayerSkillValue(player, skill)}</strong>
+          <div key={skill} className="browse-skill-rating">
+            <div className="browse-skill-rating-head">
+              <span>{PLAYER_SKILL_LABELS[skill]}</span>
+              <strong>{getPlayerSkillValue(player, skill)}</strong>
+            </div>
+            <div className="browse-skill-rating-bar" aria-label={`${PLAYER_SKILL_LABELS[skill]}: ${ratingToScore100(getPlayerSkillValue(player, skill))}%`}>
+              <span style={{ width: `${ratingToScore100(getPlayerSkillValue(player, skill))}%` }} />
+            </div>
           </div>
         ))}
       </div>

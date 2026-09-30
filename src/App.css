@@ -2744,15 +2744,35 @@ button:disabled {
   font-size: 0.85rem;
 }
 
-.browse-skill {
+.browse-skill-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.browse-skill-rating-head {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
   color: var(--muted);
 }
 
-.browse-skill strong {
+.browse-skill-rating-head strong {
   color: var(--text);
+}
+
+.browse-skill-rating-bar {
+  height: 6px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.browse-skill-rating-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
 }
 
 .browse-actions {
