@@ -336,6 +336,10 @@ export async function setPlayerCaptain(
   playerId: string,
   isCaptain: boolean,
 ): Promise<void> {
+  const room = await getRoom(roomId);
+  if (!room || !['setup', 'waiting', 'lobby'].includes(room.phase)) {
+    throw new Error('Captains can only be changed before the auction starts.');
+  }
   await updateDoc(doc(roomPaths(roomId).players, playerId), { isCaptain });
 }
 
