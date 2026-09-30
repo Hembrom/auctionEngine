@@ -17,10 +17,22 @@ export function isFirebaseRoomAdmin(state: AuctionState, uid: string | undefined
   return !!uid && !!state.adminId && state.adminId === uid;
 }
 
+/** Additional admins invited by email (case-insensitive), acting alongside the room owner. */
+export function isInvitedAdminEmail(state: AuctionState, email: string | undefined | null): boolean {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return !!normalized && !!state.adminEmails?.some((e) => e.toLowerCase() === normalized);
+}
+
 export function canAccessAdminPanel(
   roomId: string,
   state: AuctionState,
   uid: string | undefined,
+  email?: string | null,
 ): boolean {
-  return isFirebaseRoomAdmin(state, uid) || hasLegacyAdminSession(roomId, state);
+  return (
+    isFirebaseRoomAdmin(state, uid) ||
+    hasLegacyAdminSession(roomId, state) ||
+    isInvitedAdminEmail(state, email)
+  );
 }
