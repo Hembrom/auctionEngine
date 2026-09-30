@@ -129,6 +129,8 @@ export interface AuctionState {
   resultDisplay: ResultDisplay | null;
   resultEndsAt: number | null;
   adminId: string | null;
+  /** Additional admins invited by email, alongside the room owner (adminId). */
+  adminEmails?: string[];
   /** Captain IDs who opted out of bidding on the current player. */
   optedOutCaptainIds?: string[];
   /** Seconds captains have to bid on each player. Default 30. */
@@ -152,9 +154,10 @@ export interface PlayerFormData {
   playFrequency: PlayFrequency;
 }
 
-export const SQUAD_SIZE = 7;
+export const SQUAD_SIZE = 9;
 export const STARTING_BUDGET = 1000;
-export const STARTING_BID = 10;
+export const STARTING_BID = 11;
+export const MINIMUM_SLOT_RESERVE = 12;
 export const MIN_BID_INCREMENT = 1;
 export const TIMER_SECONDS = 30;
 export const RESULT_SECONDS = 10;

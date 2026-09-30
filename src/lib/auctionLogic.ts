@@ -6,6 +6,7 @@ import {
   STARTING_BID,
   STARTING_BUDGET,
   TIMER_SECONDS,
+  MINIMUM_SLOT_RESERVE,
 } from '../types';
 import { clampRating } from './playerUtils';
 import { parsePlayFrequencyLabel } from './playFrequency';
@@ -26,7 +27,7 @@ export function getRemainingSlots(captain: Captain): Record<Position, number> {
 
 export function getAvailableBudget(captain: Captain): number {
   const remaining = getRemainingPlayerCount(captain);
-  return captain.budget - remaining * STARTING_BID;
+  return captain.budget - remaining * MINIMUM_SLOT_RESERVE;
 }
 
 export function canBidOnPosition(captain: Captain, _position: Position): boolean {
@@ -334,6 +335,7 @@ export function createDefaultAuctionState(): import('../types').AuctionState {
     resultDisplay: null,
     resultEndsAt: null,
     adminId: null,
+    adminEmails: [],
     bidTimerSeconds: TIMER_SECONDS,
     resultTimerSeconds: RESULT_SECONDS,
   };
