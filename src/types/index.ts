@@ -49,6 +49,8 @@ export interface Player {
   stamina: number;
   playFrequency: PlayFrequency;
   status: PlayerStatus;
+  /** Marked by the admin as a captain; captains stay visible but do not enter the auction queue. */
+  isCaptain?: boolean;
   soldToCaptainId?: string;
   soldPrice?: number;
 }
@@ -152,6 +154,7 @@ export interface PlayerFormData {
   pace: number;
   stamina: number;
   playFrequency: PlayFrequency;
+  isCaptain?: boolean;
 }
 
 export const SQUAD_SIZE = 9;

@@ -13,6 +13,8 @@ import {
   getDocs,
   writeBatch,
   deleteField,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { deletePlayerPhotoFile, resolvePlayerImageUrl } from './playerImageStorage';
 import { db, COLLECTIONS, SUBCOLLECTIONS } from '../firebase';
@@ -329,6 +331,14 @@ export async function deletePlayer(roomId: string, playerId: string) {
   await deleteDoc(doc(roomPaths(roomId).players, playerId));
 }
 
+export async function setPlayerCaptain(
+  roomId: string,
+  playerId: string,
+  isCaptain: boolean,
+): Promise<void> {
+  await updateDoc(doc(roomPaths(roomId).players, playerId), { isCaptain });
+}
+
 export async function setPlayerPhoto(roomId: string, playerId: string, file: File) {
   const imageUrl = await resolvePlayerImageUrl(roomId, playerId, file);
   try {
@@ -367,6 +377,21 @@ export async function updateTimerSettings(
   await updateDoc(roomPaths(roomId).room, {
     bidTimerSeconds: Math.max(5, Math.round(bidTimerSeconds)),
     resultTimerSeconds: Math.max(3, Math.round(resultTimerSeconds)),
+  });
+}
+
+/** Grant another Firebase-authenticated user admin access to this room by email. */
+export async function addAdminEmail(roomId: string, email: string): Promise<void> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) throw new Error('Enter an email address.');
+  await updateDoc(roomPaths(roomId).room, {
+    adminEmails: arrayUnion(normalized),
+  });
+}
+
+export async function removeAdminEmail(roomId: string, email: string): Promise<void> {
+  await updateDoc(roomPaths(roomId).room, {
+    adminEmails: arrayRemove(email.trim().toLowerCase()),
   });
 }
 

@@ -174,7 +174,7 @@ export function shuffleArray<T>(arr: T[]): T[] {
 
 export function buildPlayerQueue(players: Player[], unsoldOnly = false): string[] {
   const filtered = players.filter((p) =>
-    unsoldOnly ? p.status === 'unsold' : p.status === 'available',
+    !p.isCaptain && (unsoldOnly ? p.status === 'unsold' : p.status === 'available'),
   );
 
   const byPosition: Record<Position, Player[]> = {

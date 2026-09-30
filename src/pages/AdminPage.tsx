@@ -19,6 +19,7 @@ import {
   addPlayer,
   addPlayersBatch,
   deletePlayer,
+  setPlayerCaptain,
   moveToLobby,
   startAuction,
   pauseAuction,
@@ -30,6 +31,8 @@ import {
   restartUnsoldRound,
   endAuction,
   updateTimerSettings,
+  addAdminEmail,
+  removeAdminEmail,
 } from '../lib/auctionService';
 import { PlayerRegistrationForm } from '../components/PlayerRegistrationForm';
 import { AdminPlayerPhotos } from '../components/AdminPlayerPhotos';
@@ -60,10 +63,13 @@ export function AdminPage() {
   const [unsoldActionError, setUnsoldActionError] = useState('');
   const [unsoldActionBusy, setUnsoldActionBusy] = useState(false);
   const [openLobbyBusy, setOpenLobbyBusy] = useState(false);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [adminEmailBusy, setAdminEmailBusy] = useState(false);
+  const [adminEmailError, setAdminEmailError] = useState('');
 
   const [form, setForm] = useState(createDefaultPlayerForm);
 
-  const isOwner = canAccessAdminPanel(roomId, state, user?.uid);
+  const isOwner = canAccessAdminPanel(roomId, state, user?.uid, user?.email);
   const needsFirebaseLogin = !isLegacyAdminId(state.adminId) && !user;
   const pending = captains.filter((c) => c.status === 'pending');
   const approved = captains.filter((c) => c.status === 'approved');
@@ -130,6 +136,33 @@ export function AdminPage() {
       setUnsoldActionError((e as Error).message);
     } finally {
       setUnsoldActionBusy(false);
+    }
+  };
+
+  const handleAddAdminEmail = async () => {
+    if (adminEmailBusy) return;
+    setAdminEmailBusy(true);
+    setAdminEmailError('');
+    try {
+      await addAdminEmail(roomId, newAdminEmail);
+      setNewAdminEmail('');
+    } catch (e) {
+      setAdminEmailError((e as Error).message);
+    } finally {
+      setAdminEmailBusy(false);
+    }
+  };
+
+  const handleRemoveAdminEmail = async (email: string) => {
+    if (adminEmailBusy) return;
+    setAdminEmailBusy(true);
+    setAdminEmailError('');
+    try {
+      await removeAdminEmail(roomId, email);
+    } catch (e) {
+      setAdminEmailError((e as Error).message);
+    } finally {
+      setAdminEmailBusy(false);
     }
   };
 
@@ -407,6 +440,47 @@ export function AdminPage() {
             {timerSaveError && <p className="error">{timerSaveError}</p>}
           </section>
 
+          <section className="card">
+            <h3>Room Admins</h3>
+            <p className="muted">
+              Invite other people to co-manage this room by their sign-in email. They'll get full
+              admin access when they log in with that email.
+            </p>
+            {(state.adminEmails ?? []).length === 0 ? (
+              <p className="muted">No additional admins invited yet.</p>
+            ) : (
+              <ul className="action-list">
+                {(state.adminEmails ?? []).map((email) => (
+                  <li key={email}>
+                    <span>{email}</span>
+                    <button
+                      className="btn-small btn-danger"
+                      disabled={adminEmailBusy}
+                      onClick={() => handleRemoveAdminEmail(email)}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="form-row">
+              <label>Admin email</label>
+              <input
+                type="email"
+                placeholder="teammate@example.com"
+                value={newAdminEmail}
+                onChange={(e) => setNewAdminEmail(e.target.value)}
+              />
+            </div>
+            <div className="config-actions">
+              <button type="button" onClick={handleAddAdminEmail} disabled={adminEmailBusy}>
+                {adminEmailBusy ? 'Adding…' : 'Add Admin'}
+              </button>
+            </div>
+            {adminEmailError && <p className="error">{adminEmailError}</p>}
+          </section>
+
           {(state.phase === 'waiting' || state.phase === 'lobby') && (
             <section className="card admin-wide">
               <h3>Player Registration ({players.length} players)</h3>
@@ -415,7 +489,7 @@ export function AdminPage() {
                   <h4>Upload CSV</h4>
                   <p className="muted">
                     Columns: Name, Position, Play Frequency, Dribbling, Shooting, Passing,
-                    Defending, Physical (Game Understanding), Pace, Stamina (ratings 1–10). Play
+                    Defending, Game Understanding, Pace, Stamina (ratings 1–10). Play
                     Frequency: Multiple Times a Week, Once a Week, Once a Month, Occasionally, or
                     Never Played
                   </p>
@@ -437,6 +511,12 @@ export function AdminPage() {
                   {players.map((p) => (
                     <li key={p.id}>
                       {p.name} ({p.positions.join('/')})
+                      <button
+                        className="btn-small"
+                        onClick={() => setPlayerCaptain(roomId, p.id, !p.isCaptain)}
+                      >
+                        {p.isCaptain ? 'Remove Captain' : 'Mark Captain'}
+                      </button>
                       <button
                         className="btn-small btn-danger"
                         onClick={() => deletePlayer(roomId, p.id)}
