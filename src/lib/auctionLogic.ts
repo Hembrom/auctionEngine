@@ -30,6 +30,14 @@ export function getAvailableBudget(captain: Captain): number {
   return captain.budget - remaining * MINIMUM_SLOT_RESERVE;
 }
 
+export function hasGoalkeeper(captain: Captain): boolean {
+  return captain.squad.some((player) => player.position === 'GK');
+}
+
+export function isSquadComplete(captain: Captain): boolean {
+  return captain.squad.length >= SQUAD_SIZE && hasGoalkeeper(captain);
+}
+
 export function canBidOnPosition(captain: Captain, _position: Position): boolean {
   return captain.squad.length < SQUAD_SIZE;
 }
@@ -52,6 +60,11 @@ export function isEligibleToBid(
   const hasRoom = captain.squad.length < SQUAD_SIZE;
   if (!hasRoom || playerPositions.length === 0) {
     return { eligible: false, reason: 'No open slot for this player' };
+  }
+
+  const remainingSlots = getRemainingPlayerCount(captain);
+  if (!hasGoalkeeper(captain) && remainingSlots === 1 && !playerPositions.includes('GK')) {
+    return { eligible: false, reason: 'A goalkeeper is required for every team' };
   }
 
   const minBid = currentHighBid === 0 ? STARTING_BID : currentHighBid + 1;
@@ -88,7 +101,7 @@ export function getUnsoldPlayers(players: Player[]): Player[] {
 export function areAllSquadsFull(captains: Captain[]): boolean {
   return captains
     .filter((c) => c.status === 'approved')
-    .every((c) => c.squad.length >= SQUAD_SIZE);
+    .every(isSquadComplete);
 }
 
 export function normalizeCaptainLabel(value: string): string {
@@ -194,9 +207,7 @@ export function isAuctionComplete(
 ): boolean {
   if (currentIndex >= queue.length) return true;
 
-  const allFull = captains
-    .filter((c) => c.status === 'approved')
-    .every((c) => c.squad.length >= SQUAD_SIZE);
+  const allFull = captains.filter((c) => c.status === 'approved').every(isSquadComplete);
 
   if (allFull) return true;
 
@@ -241,7 +252,9 @@ export function parseCsvPlayers(csv: string): {
   const shootingIdx = header.findIndex((h) => h.includes('shooting'));
   const passingIdx = header.findIndex((h) => h.includes('passing'));
   const defendingIdx = header.findIndex((h) => h.includes('defending'));
-  const physicalIdx = header.findIndex((h) => h.includes('physical'));
+  const gameUnderstandingIdx = header.findIndex(
+    (h) => h.includes('game understanding') || h.includes('physical'),
+  );
   const paceIdx = header.findIndex((h) => h.includes('pace'));
   const staminaIdx = header.findIndex((h) => h.includes('stamina'));
   const playFreqIdx = header.findIndex(
@@ -291,7 +304,7 @@ export function parseCsvPlayers(csv: string): {
         shooting: readRating(cols, ratingIdx, 3) * 2,
         passing: readRating(cols, fitnessIdx, 3) * 2,
         defending: readRating(cols, leadershipIdx, 3) * 2,
-        physical: readRating(cols, fitnessIdx, 3) * 2,
+        gameUnderstanding: readRating(cols, fitnessIdx, 3) * 2,
         pace: readRating(cols, ratingIdx, 3) * 2,
         stamina: readRating(cols, fitnessIdx, 3) * 2,
         playFrequency: readPlayFrequency(cols, playFreqIdx),
@@ -308,7 +321,7 @@ export function parseCsvPlayers(csv: string): {
       shooting: readRating(cols, shootingIdx, 5),
       passing: readRating(cols, passingIdx, 5),
       defending: readRating(cols, defendingIdx, 5),
-      physical: readRating(cols, physicalIdx, 5),
+      gameUnderstanding: readRating(cols, gameUnderstandingIdx, 5),
       pace: readRating(cols, paceIdx, 5),
       stamina: readRating(cols, staminaIdx, 5),
       playFrequency: readPlayFrequency(cols, playFreqIdx),

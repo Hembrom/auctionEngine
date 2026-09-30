@@ -1,4 +1,4 @@
-import type { Captain, Position } from '../types';
+import { SQUAD_SIZE, type Captain, type Position } from '../types';
 import { formatRemainingSlots, getAvailableBudget } from '../lib/auctionLogic';
 
 const POSITION_ORDER: Position[] = ['GK', 'DEF', 'MID', 'ST'];
@@ -34,7 +34,7 @@ function CaptainSquadCard({
       <div className="captain-squad-card-stats">
         <span>Budget <strong>₹{captain.budget}</strong></span>
         <span>Available <strong>₹{available}</strong></span>
-        <span>Players <strong>{captain.squad.length}/7</strong></span>
+        <span>Players <strong>{captain.squad.length}/{SQUAD_SIZE}</strong></span>
       </div>
       <p className="muted captain-squad-need">Need: {formatRemainingSlots(captain)}</p>
       <div className="captain-squad-rows">
