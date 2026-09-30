@@ -18,7 +18,7 @@ export type PlayerSkill =
   | 'shooting'
   | 'passing'
   | 'defending'
-  | 'physical'
+  | 'gameUnderstanding'
   | 'pace'
   | 'stamina';
 
@@ -44,7 +44,7 @@ export interface Player {
   shooting: number;
   passing: number;
   defending: number;
-  physical: number;
+  gameUnderstanding: number;
   pace: number;
   stamina: number;
   playFrequency: PlayFrequency;
@@ -148,7 +148,7 @@ export interface PlayerFormData {
   shooting: number;
   passing: number;
   defending: number;
-  physical: number;
+  gameUnderstanding: number;
   pace: number;
   stamina: number;
   playFrequency: PlayFrequency;

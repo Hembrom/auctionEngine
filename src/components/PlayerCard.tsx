@@ -15,7 +15,7 @@ const STAT_ORDER: { skill: PlayerSkill; code: string }[] = [
   { skill: 'shooting', code: 'SHO' },
   { skill: 'defending', code: 'DEF' },
   { skill: 'passing', code: 'PAS' },
-  { skill: 'physical', code: 'PHY' },
+  { skill: 'gameUnderstanding', code: 'GAM' },
   { skill: 'stamina', code: 'STA' },
 ];
 

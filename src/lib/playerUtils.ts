@@ -8,7 +8,7 @@ export const PLAYER_SKILLS: PlayerSkill[] = [
   'shooting',
   'passing',
   'defending',
-  'physical',
+  'gameUnderstanding',
   'pace',
   'stamina',
 ];
@@ -18,7 +18,7 @@ export const PLAYER_SKILL_LABELS: Record<PlayerSkill, string> = {
   shooting: 'Shooting',
   passing: 'Passing',
   defending: 'Defending',
-  physical: 'Physical',
+  gameUnderstanding: 'Game Understanding',
   pace: 'Pace',
   stamina: 'Stamina',
 };
@@ -38,6 +38,7 @@ type LegacyPlayerFields = {
   fitness?: number;
   leadership?: number;
   teamInfluence?: number;
+  physical?: number;
 };
 
 export function clampRating(value: number, max = RATING_MAX): number {
@@ -54,7 +55,7 @@ export function createDefaultPlayerForm(): PlayerFormData {
     shooting: 5,
     passing: 5,
     defending: 5,
-    physical: 5,
+    gameUnderstanding: 5,
     pace: 5,
     stamina: 5,
     playFrequency: 'once_week',
@@ -84,7 +85,7 @@ export function normalizePlayer(
       shooting: clampRating(raw.shooting ?? 5),
       passing: clampRating(raw.passing ?? 5),
       defending: clampRating(raw.defending ?? 5),
-      physical: clampRating(raw.physical ?? 5),
+      gameUnderstanding: clampRating(raw.gameUnderstanding ?? raw.physical ?? 5),
       pace: clampRating(raw.pace ?? 5),
       stamina: clampRating(raw.stamina ?? 5),
       playFrequency: normalizePlayFrequency(raw.playFrequency),
@@ -106,7 +107,7 @@ export function normalizePlayer(
     shooting: scaleLegacyToTen(raw.lastMatchRating, base),
     passing: scaleLegacyToTen(raw.fitness, base),
     defending: scaleLegacyToTen(raw.leadership, base),
-    physical: scaleLegacyToTen(raw.fitness, base),
+    gameUnderstanding: scaleLegacyToTen(raw.physical ?? raw.fitness, base),
     pace: scaleLegacyToTen(raw.lastMatchRating, base),
     stamina: scaleLegacyToTen(raw.fitness, base),
     playFrequency: normalizePlayFrequency(raw.playFrequency),
@@ -126,7 +127,7 @@ export function sanitizePlayerForm(form: PlayerFormData): PlayerFormData {
     shooting: clampRating(form.shooting),
     passing: clampRating(form.passing),
     defending: clampRating(form.defending),
-    physical: clampRating(form.physical),
+    gameUnderstanding: clampRating(form.gameUnderstanding),
     pace: clampRating(form.pace),
     stamina: clampRating(form.stamina),
   };
