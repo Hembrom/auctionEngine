@@ -446,7 +446,7 @@ button:disabled {
 
 .faq-answer {
   color: #3d4b43;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   line-height: 1.7;
 }
 
@@ -509,7 +509,7 @@ button:disabled {
 
   .faq-answer,
   .reminders-list {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 }
 
