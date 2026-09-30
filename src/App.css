@@ -853,7 +853,7 @@ button:disabled {
 }
 
 .fifa-position {
-  margin-top: 0;
+  margin-top: 0.35rem;
   font-size: 3rem;
   font-weight: 800;
   color: #f0c94e;
