@@ -23,14 +23,9 @@ export function BrowsePlayerCard({
 }: BrowsePlayerCardProps) {
   return (
     <article className={`browse-player-card ${shortlisted ? 'browse-player-shortlisted' : ''}`}>
-      <PlayerCard player={player} />
+      <PlayerCard player={player} showCaptainMark={player.isCaptain} />
       <div className="browse-player-meta">
         <span className={`status-pill status-${player.status}`}>{player.status}</span>
-        {player.isCaptain && (
-          <span className="captain-player-mark" title="Selected captain">
-            (C)
-          </span>
-        )}
       </div>
 
       {canShortlist && (

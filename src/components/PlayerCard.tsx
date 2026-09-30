@@ -6,6 +6,7 @@ import { getOverallRating, getPlayerSkillValue, ratingToScore100 } from '../lib/
 interface PlayerCardProps {
   player: Player;
   large?: boolean;
+  showCaptainMark?: boolean;
 }
 
 /** FIFA-style stat order/short codes, interleaved into two columns (PAC | DRI, SHO | DEF, ...). */
@@ -19,7 +20,7 @@ const STAT_ORDER: { skill: PlayerSkill; code: string }[] = [
   { skill: 'stamina', code: 'STA' },
 ];
 
-export function PlayerCard({ player, large }: PlayerCardProps) {
+export function PlayerCard({ player, large, showCaptainMark = false }: PlayerCardProps) {
   const overall = getOverallRating(player);
   const { label: frequencyLabel } = getPlayFrequencyOption(player.playFrequency);
   const positionLabel = player.positions.join('/');
@@ -38,7 +39,10 @@ export function PlayerCard({ player, large }: PlayerCardProps) {
           <PlayerPhoto player={player} size={large ? 'lg' : 'md'} showPlaceholder />
         </div>
 
-        <h2 className="player-card-name">{player.name}</h2>
+        <h2 className="player-card-name">
+          {player.name}
+          {showCaptainMark && <span className="fifa-captain-mark"> (C)</span>}
+        </h2>
 
         <div className="fifa-stats-grid">
           {STAT_ORDER.map(({ skill, code }) => (
