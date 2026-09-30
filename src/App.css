@@ -1161,6 +1161,86 @@ button:disabled {
   margin-bottom: 1.5rem;
 }
 
+/* Keep the live auction essentials visible together on typical laptop screens. */
+.auction-stack > .player-card-fifa-wrap {
+  width: min(100%, 273px);
+  margin: 0 auto;
+}
+
+.auction-stack > .player-card-fifa-wrap .player-card-fifa {
+  max-width: 273px;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-photo-frame {
+  margin-bottom: 1rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-photo-frame .player-photo:not(.player-photo-empty),
+.auction-stack > .player-card-fifa-wrap .fifa-photo-frame .player-photo-empty {
+  max-width: 234px;
+  height: 273px;
+  max-height: 273px;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-overall,
+.auction-stack > .player-card-fifa-wrap .fifa-position {
+  font-size: 1.95rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-position-sm {
+  font-size: 1.05rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-position-xs {
+  font-size: 0.75rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .player-card-name {
+  font-size: 0.9rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-stats-grid {
+  max-width: 208px;
+  gap: 0.3rem 0.9rem;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-stat-value {
+  font-size: 0.8rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-stat-label {
+  font-size: 0.6rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-frequency-row {
+  margin-top: 0.45rem;
+  padding: 0.2rem 0.45rem;
+}
+
+.auction-stack > .player-card-fifa-wrap .fifa-frequency-value {
+  font-size: 0.7rem;
+}
+
+.auction-stack .bid-hero {
+  min-height: 84px;
+  padding: 0.9rem 1.25rem;
+}
+
+.auction-stack .bid-hero-amount {
+  font-size: clamp(2rem, 5vw, 2.6rem);
+}
+
+.auction-stack .circular-timer {
+  width: 88px;
+  height: 88px;
+}
+
+.auction-stack .circular-timer-value {
+  font-size: 1.7rem;
+}
+
 .auction-grid {
   display: grid;
   grid-template-columns: 1fr;
