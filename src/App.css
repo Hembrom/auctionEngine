@@ -2719,6 +2719,19 @@ button:disabled {
   max-width: 420px;
 }
 
+.browse-player-card .fifa-photo-frame {
+  margin-bottom: 1rem;
+}
+
+.browse-player-card .fifa-photo-frame .player-photo:not(.player-photo-empty),
+.browse-player-card .fifa-photo-frame .player-photo-empty {
+  width: 100%;
+  max-width: 280px;
+  height: 320px;
+  max-height: 320px;
+  aspect-ratio: 4 / 5;
+}
+
 .browse-player-meta {
   display: flex;
   justify-content: center;
