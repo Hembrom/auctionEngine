@@ -639,6 +639,9 @@ button:disabled {
   max-width: none;
   height: 140px;
   aspect-ratio: auto;
+  object-fit: contain;
+  object-position: center;
+  background: var(--bg);
 }
 
 .browse-player-card .browse-player-photo .player-photo-empty {
