@@ -6,9 +6,11 @@ import { findCaptainByAuthUid } from '../lib/auctionService';
 export function useCaptainSession(roomId: string) {
   const { user, loading: authLoading } = useAuth();
   const [ready, setReady] = useState(false);
+  const [captainId, setCaptainIdState] = useState<string | null>(() => getCaptainId(roomId));
 
   useEffect(() => {
     if (authLoading) return;
+    setCaptainIdState(getCaptainId(roomId));
     if (!user) {
       setReady(true);
       return;
@@ -19,12 +21,14 @@ export function useCaptainSession(roomId: string) {
     (async () => {
       const sessionId = getCaptainId(roomId);
       if (sessionId) {
+        if (!cancelled) setCaptainIdState(sessionId);
         if (!cancelled) setReady(true);
         return;
       }
       const existing = await findCaptainByAuthUid(roomId, user.uid);
       if (existing && existing.status !== 'rejected') {
         setCaptainId(roomId, existing.id);
+        if (!cancelled) setCaptainIdState(existing.id);
       }
       if (!cancelled) setReady(true);
     })();
@@ -37,6 +41,6 @@ export function useCaptainSession(roomId: string) {
   return {
     authLoading: authLoading || !ready,
     user,
-    captainId: user ? getCaptainId(roomId) : null,
+    captainId: user ? captainId : null,
   };
 }
