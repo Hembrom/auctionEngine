@@ -1886,57 +1886,175 @@ button:disabled {
 }
 
 .auction-countdown {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  padding: 1.5rem 1.25rem 1.25rem;
   text-align: center;
-  margin-bottom: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background:
+    radial-gradient(120% 140% at 50% -20%, var(--role-glow), transparent 65%),
+    linear-gradient(160deg, var(--surface2), var(--surface));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.auction-countdown-label {
-  margin: 0;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.7;
+/* Slow sweep of light across the banner. */
+.auction-countdown-glow {
+  position: absolute;
+  inset: -40% -60%;
+  pointer-events: none;
+  background: linear-gradient(
+    75deg,
+    transparent 42%,
+    color-mix(in srgb, var(--accent) 18%, transparent) 50%,
+    transparent 58%
+  );
+  animation: countdown-sweep 6s linear infinite;
 }
 
-.auction-countdown-time {
-  margin: 0.25rem 0 0.75rem;
-  font-weight: 600;
+.auction-countdown-body {
+  position: relative;
 }
 
-.auction-countdown-live {
-  margin: 0;
-  font-size: 1.25rem;
+.auction-countdown-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: var(--role-glow);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--header-accent);
+  font-size: 0.68rem;
   font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.auction-countdown-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent);
+  animation: countdown-pulse 1.8s ease-out infinite;
 }
 
 .auction-countdown-grid {
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin: 1.1rem 0 0.9rem;
+}
+
+.auction-countdown-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
 }
 
 .auction-countdown-unit {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 3.5rem;
-  padding: 0.5rem 0.25rem;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  min-width: 4.4rem;
+  padding: 0.6rem 0.4rem 0.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .auction-countdown-unit strong {
-  font-size: 1.6rem;
+  font-size: clamp(1.8rem, 7vw, 2.4rem);
   line-height: 1;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+  color: var(--header-accent);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .auction-countdown-unit span {
-  margin-top: 0.3rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  margin-top: 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0.7;
+  color: var(--muted);
+}
+
+.auction-countdown-sep {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 2.1rem;
+  color: var(--accent);
+  color: color-mix(in srgb, var(--accent) 55%, transparent);
+  animation: countdown-blink 1s steps(2, start) infinite;
+}
+
+.auction-countdown-time {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.auction-countdown-live {
+  margin: 1.1rem 0 0.9rem;
+  font-size: clamp(1.2rem, 5vw, 1.6rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--header-accent);
+}
+
+.auction-countdown.is-imminent {
+  border-color: color-mix(in srgb, var(--accent) 75%, transparent);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    0 0 26px color-mix(in srgb, var(--accent) 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+@keyframes countdown-sweep {
+  from {
+    transform: translateX(-35%);
+  }
+  to {
+    transform: translateX(35%);
+  }
+}
+
+@keyframes countdown-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 9px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes countdown-blink {
+  to {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auction-countdown-glow,
+  .auction-countdown-dot,
+  .auction-countdown-sep {
+    animation: none;
+  }
 }
 
 .admin-mgmt-grid {
