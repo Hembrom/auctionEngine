@@ -1,6 +1,7 @@
-import type { Player } from '../types';
+import type { Player, Position } from '../types';
+import { POSITION_ORDER } from '../types';
 import { getOverallRating } from './playerUtils';
-import { shuffleArray } from './auctionLogic';
+import { getPrimaryPosition, shuffleArray } from './auctionLogic';
 
 /** Players within this OVR distance of each other are shuffled together before drafting. */
 const OVR_BAND = 3;
@@ -60,6 +61,34 @@ function goalkeeperCount(team: GeneratedTeam): number {
   return members(team).filter(isGoalkeeper).length;
 }
 
+function countAtPosition(team: GeneratedTeam, position: Position): number {
+  return members(team).filter((p) => getPrimaryPosition(p) === position).length;
+}
+
+/** Team that is shortest on this position, weakest total OVR breaking ties. */
+function pickTeamForPosition(
+  teams: GeneratedTeam[],
+  position: Position,
+  isEligible: (index: number) => boolean,
+): number {
+  let targetIndex = -1;
+  let bestCount = Number.POSITIVE_INFINITY;
+  let bestTotal = Number.POSITIVE_INFINITY;
+
+  teams.forEach((team, index) => {
+    if (!isEligible(index)) return;
+    const count = countAtPosition(team, position);
+    const total = teamValue(team, ovr);
+    if (count < bestCount || (count === bestCount && total < bestTotal)) {
+      bestCount = count;
+      bestTotal = total;
+      targetIndex = index;
+    }
+  });
+
+  return targetIndex;
+}
+
 function spreadOf(values: number[]): number {
   if (values.length === 0) return 0;
   return Math.max(...values) - Math.min(...values);
@@ -70,16 +99,14 @@ function take(pool: Player[], player: Player): void {
   if (index >= 0) pool.splice(index, 1);
 }
 
-/** Never trade away a team's only goalkeeper unless one comes back in return. */
+/** Swaps must keep each team's positional makeup intact, so only like-for-like trades. */
 function canSwapPlayers(
-  teamA: GeneratedTeam,
+  _teamA: GeneratedTeam,
   a: Player,
-  teamB: GeneratedTeam,
+  _teamB: GeneratedTeam,
   b: Player,
 ): boolean {
-  if (isGoalkeeper(a) && !isGoalkeeper(b) && goalkeeperCount(teamA) <= 1) return false;
-  if (isGoalkeeper(b) && !isGoalkeeper(a) && goalkeeperCount(teamB) <= 1) return false;
-  return true;
+  return getPrimaryPosition(a) === getPrimaryPosition(b);
 }
 
 function swapPlayers(teamA: GeneratedTeam, a: Player, teamB: GeneratedTeam, b: Player): void {
@@ -141,29 +168,21 @@ function distributeStaminaLeaders(
   }
 }
 
-/** Snake draft: strongest-first round, then reversed, alternating. */
-function distributeByBookendDraft(
+/** Fills position by position so no team ends up with four defenders and no midfielder. */
+function distributeByPosition(
   teams: GeneratedTeam[],
   pool: Player[],
   slots: number[],
 ): void {
-  const queue = sortPlayersForDraft(pool);
-  let round = 0;
-  while (queue.length > 0 && slots.some((n) => n > 0)) {
-    const order = teams.map((_, i) => i);
-    if (round % 2 === 1) order.reverse();
-    let placed = false;
-    for (const index of order) {
-      if (slots[index] <= 0) continue;
-      const player = queue.shift();
-      if (!player) break;
+  for (const position of POSITION_ORDER) {
+    const bucket = pool.filter((p) => getPrimaryPosition(p) === position);
+    for (const player of sortPlayersForDraft(bucket)) {
+      const index = pickTeamForPosition(teams, position, (i) => slots[i] > 0);
+      if (index < 0) return;
       teams[index].assigned.push(player);
       slots[index] -= 1;
       take(pool, player);
-      placed = true;
     }
-    if (!placed) break;
-    round += 1;
   }
 }
 
@@ -318,7 +337,7 @@ export function generateBalancedNTeams(
       .map((p) => p.id),
   );
   distributeStaminaLeaders(teams, remaining, coreSlots, leaderIds);
-  distributeByBookendDraft(teams, remaining, coreSlots);
+  distributeByPosition(teams, remaining, coreSlots);
 
   // 5. Local search on OVR, then stamina, then restore the 2-leaders-per-team split.
   optimizeTeamBalance(teams, ovr, OVR_TOLERANCE);
@@ -340,21 +359,12 @@ export function generateBalancedNTeams(
   });
 
   for (const player of leftovers) {
-    let targetIndex = -1;
-    let lowestTotal = Number.POSITIVE_INFINITY;
-    teams.forEach((team, index) => {
-      if (!hasRoom(index)) return;
-      const total = teamValue(team, ovr);
-      if (total < lowestTotal) {
-        lowestTotal = total;
-        targetIndex = index;
-      }
-    });
-    if (targetIndex < 0) {
+    const index = pickTeamForPosition(teams, getPrimaryPosition(player), hasRoom);
+    if (index < 0) {
       unassigned.push(player);
       continue;
     }
-    teams[targetIndex].assigned.push(player);
+    teams[index].assigned.push(player);
   }
 
   // 7. Variety pass + final goalkeeper audit.
