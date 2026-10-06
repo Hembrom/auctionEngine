@@ -253,7 +253,7 @@ export function AdminPage() {
   const handleAiGenerateTeams = async () => {
     if (aiGenerateBusy) return;
     const confirmed = window.confirm(
-      'Stop the auction and auto-fill every team with the remaining players? Players already won stay with their team. This cannot be undone.',
+      'Auto-fill every team with the remaining players and finish the auction? Players already won stay with their team. This cannot be undone.',
     );
     if (!confirmed) return;
 
@@ -267,6 +267,28 @@ export function AdminPage() {
       setAiGenerateBusy(false);
     }
   };
+
+  const aiGenerateControls = (
+    <>
+      <div className="admin-controls admin-ai-controls">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleAiGenerateTeams}
+          disabled={aiGenerateBusy || approved.length === 0 || players.length === 0}
+        >
+          {aiGenerateBusy ? 'Generating…' : '🤖 AI Generate Teams'}
+        </button>
+      </div>
+      <p className="muted admin-live-meta">
+        Skips bidding and fills every squad with the remaining players, balanced on overall rating,
+        stamina and goalkeeper coverage. Players already won stay with their team, then the auction
+        is finished.
+      </p>
+      {approved.length === 0 && <p className="muted">Approve at least one captain first.</p>}
+      {aiGenerateError && <p className="error">{aiGenerateError}</p>}
+    </>
+  );
 
   const adminLiveControls = isLivePhase ? (
     <div className="admin-live-controls card">
@@ -310,21 +332,7 @@ export function AdminPage() {
           {unsoldActionError && <p className="error">{unsoldActionError}</p>}
         </>
       )}
-      <div className="admin-controls admin-ai-controls">
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleAiGenerateTeams}
-          disabled={aiGenerateBusy || approved.length === 0}
-        >
-          {aiGenerateBusy ? 'Generating…' : '🤖 AI Generate Teams'}
-        </button>
-      </div>
-      <p className="muted admin-live-meta">
-        Ends the auction and fills every squad with the remaining players, balanced on overall
-        rating, stamina and goalkeeper coverage. Players already won stay with their team.
-      </p>
-      {aiGenerateError && <p className="error">{aiGenerateError}</p>}
+      {aiGenerateControls}
     </div>
   ) : null;
 
@@ -434,6 +442,13 @@ export function AdminPage() {
         onStartAuction={() => startAuction(roomId, players)}
         openLobbyBusy={openLobbyBusy}
       />
+
+      {!isLivePhase && (
+        <section className="card admin-wide">
+          <h3>Skip the Auction</h3>
+          {aiGenerateControls}
+        </section>
+      )}
 
       <CollapsibleSection title="Room Setup" defaultOpen={false}>
         <div className="admin-grid">

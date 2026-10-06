@@ -1881,6 +1881,9 @@ button:disabled {
 .admin-ai-controls {
   margin-top: 1rem;
   margin-bottom: 0.5rem;
+}
+
+.admin-live-controls .admin-ai-controls {
   padding-top: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
