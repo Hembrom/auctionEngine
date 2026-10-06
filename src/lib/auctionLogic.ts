@@ -6,13 +6,19 @@ import {
   STARTING_BID,
   STARTING_BUDGET,
   TIMER_SECONDS,
-  MINIMUM_SLOT_RESERVE,
 } from '../types';
 import { clampRating } from './playerUtils';
 import { parsePlayFrequencyLabel } from './playFrequency';
 
+/** Team size including the captain, who fills one of the SQUAD_SIZE slots without being bought. */
+export function getTeamSize(captain: Captain): number {
+  const captainInSquad =
+    !!captain.playerId && captain.squad.some((entry) => entry.playerId === captain.playerId);
+  return captain.squad.length + (captainInSquad ? 0 : 1);
+}
+
 export function getRemainingPlayerCount(captain: Captain): number {
-  return SQUAD_SIZE - captain.squad.length;
+  return Math.max(0, SQUAD_SIZE - getTeamSize(captain));
 }
 
 export function getRemainingSlots(captain: Captain): Record<Position, number> {
@@ -25,9 +31,9 @@ export function getRemainingSlots(captain: Captain): Record<Position, number> {
   };
 }
 
+/** Hold back the minimum bid for every slot still to be filled, including the current one. */
 export function getAvailableBudget(captain: Captain): number {
-  const remaining = getRemainingPlayerCount(captain);
-  return captain.budget - remaining * MINIMUM_SLOT_RESERVE;
+  return captain.budget - getRemainingPlayerCount(captain) * STARTING_BID;
 }
 
 export function hasGoalkeeper(captain: Captain): boolean {
@@ -35,11 +41,11 @@ export function hasGoalkeeper(captain: Captain): boolean {
 }
 
 export function isSquadComplete(captain: Captain): boolean {
-  return captain.squad.length >= SQUAD_SIZE && hasGoalkeeper(captain);
+  return getRemainingPlayerCount(captain) <= 0 && hasGoalkeeper(captain);
 }
 
 export function canBidOnPosition(captain: Captain, _position: Position): boolean {
-  return captain.squad.length < SQUAD_SIZE;
+  return getRemainingPlayerCount(captain) > 0;
 }
 
 export function formatSoldMessage(playerName: string, teamName: string, amount: number): string {
@@ -52,17 +58,16 @@ export function isEligibleToBid(
   bidAmount: number,
   currentHighBid: number,
 ): { eligible: boolean; reason?: string } {
-  if (captain.squad.length >= SQUAD_SIZE) {
+  const remainingSlots = getRemainingPlayerCount(captain);
+  if (remainingSlots <= 0) {
     return { eligible: false, reason: 'Squad is full' };
   }
 
   const playerPositions = player.positions;
-  const hasRoom = captain.squad.length < SQUAD_SIZE;
-  if (!hasRoom || playerPositions.length === 0) {
+  if (playerPositions.length === 0) {
     return { eligible: false, reason: 'No open slot for this player' };
   }
 
-  const remainingSlots = getRemainingPlayerCount(captain);
   if (!hasGoalkeeper(captain) && remainingSlots === 1 && !playerPositions.includes('GK')) {
     return { eligible: false, reason: 'A goalkeeper is required for every team' };
   }
@@ -113,11 +118,21 @@ export function matchCaptainPlayers(
   players: Player[],
   captains: Captain[],
 ): Map<string, Player> {
+  const byId = new Map(players.map((p) => [p.id, p]));
   const captainPlayers = players.filter((p) => p.isCaptain);
   const claimed = new Set<string>();
   const matches = new Map<string, Player>();
 
+  // An explicit link set by the admin always wins over the legacy name match.
   for (const captain of captains) {
+    const linked = captain.playerId ? byId.get(captain.playerId) : undefined;
+    if (!linked || claimed.has(linked.id)) continue;
+    claimed.add(linked.id);
+    matches.set(captain.id, linked);
+  }
+
+  for (const captain of captains) {
+    if (matches.has(captain.id)) continue;
     const match = captainPlayers.find(
       (p) =>
         !claimed.has(p.id) &&

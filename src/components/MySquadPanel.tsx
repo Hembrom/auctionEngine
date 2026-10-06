@@ -1,5 +1,5 @@
 import { SQUAD_SIZE, type Captain } from '../types';
-import { formatRemainingSlots, getAvailableBudget } from '../lib/auctionLogic';
+import { formatRemainingSlots, getAvailableBudget, getTeamSize } from '../lib/auctionLogic';
 
 interface MySquadPanelProps {
   captain: Captain;
@@ -29,7 +29,7 @@ export function MySquadPanel({ captain }: MySquadPanelProps) {
           Available to bid: <strong>₹{available}</strong>
         </span>
         <span>
-          Players: <strong>{captain.squad.length}/{SQUAD_SIZE}</strong>
+          Players: <strong>{getTeamSize(captain)}/{SQUAD_SIZE}</strong>
         </span>
         <span>
           Need: <strong>{formatRemainingSlots(captain)}</strong>

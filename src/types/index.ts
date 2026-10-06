@@ -79,6 +79,8 @@ export interface Captain {
   joinedAt: number;
   /** Firebase Auth UID — ties this captain to a login. */
   authUid?: string;
+  /** The player in the pool who captains this team. */
+  playerId?: string;
   /** Player IDs this captain has shortlisted (personal). */
   shortlist?: string[];
   /** Personal tags/marks keyed by player ID. */
@@ -162,7 +164,6 @@ export interface PlayerFormData {
 export const SQUAD_SIZE = 9;
 export const STARTING_BUDGET = 1000;
 export const STARTING_BID = 11;
-export const MINIMUM_SLOT_RESERVE = 12;
 export const MIN_BID_INCREMENT = 1;
 export const TIMER_SECONDS = 30;
 export const RESULT_SECONDS = 10;

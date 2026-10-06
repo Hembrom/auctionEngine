@@ -70,8 +70,8 @@ export function AuctionDashboardSections({
         </CollapsibleSection>
       )}
 
-      {playerManagement && isLivePhase && (
-        <CollapsibleSection title="Player Management" defaultOpen={false}>
+      {playerManagement && (
+        <CollapsibleSection title="Player Management" defaultOpen={!isLivePhase}>
           {playerManagement}
         </CollapsibleSection>
       )}

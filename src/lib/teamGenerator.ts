@@ -153,15 +153,21 @@ function distributeStaminaLeaders(
     .sort((a, b) => b.stamina - a.stamina);
 
   for (const leader of leaders) {
-    const counts = teams.map(
-      (team, index) =>
-        [index, members(team).filter((p) => leaderIds.has(p.id)).length] as const,
+    const eligible = teams
+      .map((team, index) => ({
+        index,
+        leaderCount: members(team).filter((p) => leaderIds.has(p.id)).length,
+      }))
+      .filter(({ index, leaderCount }) => slots[index] > 0 && leaderCount < STAMINA_LEADERS_PER_TEAM);
+    if (eligible.length === 0) break;
+
+    const fewest = Math.min(...eligible.map((e) => e.leaderCount));
+    const candidates = new Set(
+      eligible.filter((e) => e.leaderCount === fewest).map((e) => e.index),
     );
-    const target = counts
-      .filter(([index, count]) => slots[index] > 0 && count < STAMINA_LEADERS_PER_TEAM)
-      .sort((a, b) => a[1] - b[1])[0];
-    if (!target) break;
-    const [index] = target;
+    const index = pickTeamForPosition(teams, getPrimaryPosition(leader), (i) => candidates.has(i));
+    if (index < 0) break;
+
     teams[index].assigned.push(leader);
     slots[index] -= 1;
     take(pool, leader);
@@ -174,15 +180,33 @@ function distributeByPosition(
   pool: Player[],
   slots: number[],
 ): void {
-  for (const position of POSITION_ORDER) {
-    const bucket = pool.filter((p) => getPrimaryPosition(p) === position);
-    for (const player of sortPlayersForDraft(bucket)) {
+  // Scarcest position first, otherwise plentiful positions eat the slots and starve the rest.
+  const buckets = POSITION_ORDER.map((position) => ({
+    position,
+    players: pool.filter((p) => getPrimaryPosition(p) === position),
+  })).sort((a, b) => a.players.length - b.players.length);
+
+  const unplaced: Player[] = [];
+
+  for (const { position, players } of buckets) {
+    for (const player of sortPlayersForDraft(players)) {
       const index = pickTeamForPosition(teams, position, (i) => slots[i] > 0);
-      if (index < 0) return;
+      if (index < 0) {
+        unplaced.push(player);
+        continue;
+      }
       teams[index].assigned.push(player);
       slots[index] -= 1;
       take(pool, player);
     }
+  }
+
+  for (const player of unplaced) {
+    const index = slots.findIndex((n) => n > 0);
+    if (index < 0) return;
+    teams[index].assigned.push(player);
+    slots[index] -= 1;
+    take(pool, player);
   }
 }
 

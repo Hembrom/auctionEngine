@@ -38,6 +38,7 @@ import {
   buildPlayerQueue,
   createDefaultAuctionState,
   formatSoldMessage,
+  getPrimaryPosition,
   isAuctionComplete,
   matchCaptainPlayers,
   normalizeCaptainLabel,
@@ -346,6 +347,38 @@ export async function setPlayerCaptain(
     throw new Error('Captains can only be changed before the auction starts.');
   }
   await updateDoc(doc(roomPaths(roomId).players, playerId), { isCaptain });
+}
+
+/** Points a captain record at the player who captains that team, keeping isCaptain in sync. */
+export async function linkCaptainPlayer(
+  roomId: string,
+  captainId: string,
+  playerId: string | null,
+  captains: Captain[],
+): Promise<void> {
+  const paths = roomPaths(roomId);
+
+  if (playerId) {
+    const taken = captains.find((c) => c.id !== captainId && c.playerId === playerId);
+    if (taken) {
+      throw new Error(`That player already captains ${taken.teamName || taken.name}.`);
+    }
+  }
+
+  const previousId = captains.find((c) => c.id === captainId)?.playerId;
+  const batch = writeBatch(db);
+
+  if (previousId && previousId !== playerId) {
+    batch.update(doc(paths.players, previousId), { isCaptain: false });
+  }
+  if (playerId) {
+    batch.update(doc(paths.players, playerId), { isCaptain: true });
+  }
+  batch.update(doc(paths.captains, captainId), {
+    playerId: playerId ?? deleteField(),
+  });
+
+  await batch.commit();
 }
 
 export async function setPlayerPhoto(roomId: string, playerId: string, file: File) {
@@ -782,9 +815,9 @@ export interface AutoGenerateTeamsSummary {
 }
 
 /**
- * Admin escape hatch: stop bidding and fill every approved captain's squad with the
- * remaining players using the balanced N-team generator. Already-won players stay put,
- * and each captain-marked player is pinned to their own team.
+ * Admin escape hatch: skip bidding and build every squad with the balanced N-team
+ * generator. Captains do not have to have joined — any captain-marked player without a
+ * captain record becomes a team leader. Already-won players stay put.
  */
 export async function autoGenerateTeams(
   roomId: string,
@@ -792,43 +825,69 @@ export async function autoGenerateTeams(
   captains: Captain[],
 ): Promise<AutoGenerateTeamsSummary> {
   const paths = roomPaths(roomId);
+  const room = await getRoom(roomId);
+  const startingBudget = room?.startingBudget || STARTING_BUDGET;
+
   const approved = captains.filter((c) => c.status === 'approved');
-  if (approved.length === 0) {
-    throw new Error('Approve at least one captain before generating teams.');
-  }
-
   const byId = new Map(players.map((p) => [p.id, p]));
-  const pool = players.filter((p) => !p.isCaptain && p.status !== 'sold');
-
-  // Captain-marked players are pinned to their own team and never enter the pool.
   const captainMatches = matchCaptainPlayers(players, approved);
-  const captainEntries = approved.map((captain) => {
-    const player = captainMatches.get(captain.id) ?? null;
-    const alreadyInSquad = !!player && captain.squad.some((e) => e.playerId === player.id);
-    return { player, alreadyInSquad };
-  });
+  const claimed = new Set([...captainMatches.values()].map((p) => p.id));
 
-  const seeds: TeamSeed[] = approved.map((captain, index) => {
-    const locked = captain.squad
-      .map((entry) => byId.get(entry.playerId))
-      .filter((p): p is Player => !!p);
-    const { player, alreadyInSquad } = captainEntries[index];
-    if (player && !alreadyInSquad) locked.push(player);
+  const joinedTeams = approved.map((captain) => {
+    const captainPlayer = captainMatches.get(captain.id) ?? null;
     return {
+      ref: doc(paths.captains, captain.id),
       id: captain.id,
       name: captain.teamName || captain.name,
-      locked,
+      isNew: false,
+      squad: captain.squad,
+      budget: captain.budget,
+      captainPlayer,
+      captainInSquad: !!captainPlayer && captain.squad.some((e) => e.playerId === captainPlayer.id),
     };
+  });
+
+  // Captain-marked players nobody has claimed become team leaders in their own right.
+  const leaderTeams = players
+    .filter((p) => p.isCaptain && !claimed.has(p.id))
+    .map((player) => {
+      const ref = doc(paths.captains);
+      return {
+        ref,
+        id: ref.id,
+        name: player.name,
+        isNew: true,
+        squad: [] as SquadPlayer[],
+        budget: startingBudget,
+        captainPlayer: player,
+        captainInSquad: false,
+      };
+    });
+
+  const targets = [...joinedTeams, ...leaderTeams];
+  if (targets.length === 0) {
+    throw new Error('Mark at least one player as captain, or approve a captain, first.');
+  }
+
+  const leaderIds = new Set(
+    targets.map((t) => t.captainPlayer?.id).filter((id): id is string => !!id),
+  );
+  const pool = players.filter((p) => !leaderIds.has(p.id) && p.status !== 'sold');
+
+  const seeds: TeamSeed[] = targets.map((target) => {
+    const locked = target.squad
+      .map((entry) => byId.get(entry.playerId))
+      .filter((p): p is Player => !!p);
+    if (target.captainPlayer && !target.captainInSquad) locked.push(target.captainPlayer);
+    return { id: target.id, name: target.name, locked };
   });
 
   const lockedCounts = seeds.map((seed) => seed.locked?.length ?? 0);
   const totalSlots = lockedCounts.reduce((sum, n) => sum + n, 0) + pool.length;
-  const baseSize = Math.min(SQUAD_SIZE, Math.floor(totalSlots / approved.length));
-  const bonusCount = baseSize < SQUAD_SIZE ? totalSlots - baseSize * approved.length : 0;
-  const bonusTeams = new Set(
-    shuffleArray(approved.map((_, i) => i)).slice(0, bonusCount),
-  );
-  const teamSizes = approved.map((_, index) =>
+  const baseSize = Math.min(SQUAD_SIZE, Math.floor(totalSlots / targets.length));
+  const bonusCount = baseSize < SQUAD_SIZE ? totalSlots - baseSize * targets.length : 0;
+  const bonusTeams = new Set(shuffleArray(targets.map((_, i) => i)).slice(0, bonusCount));
+  const teamSizes = targets.map((_, index) =>
     Math.max(lockedCounts[index], baseSize + (bonusTeams.has(index) ? 1 : 0)),
   );
 
@@ -838,13 +897,11 @@ export async function autoGenerateTeams(
   let assignedCount = 0;
 
   result.teams.forEach((team, index) => {
-    const captain = approved[index];
-    const { player: captainPlayer, alreadyInSquad } = captainEntries[index];
-
+    const target = targets[index];
     const additions: SquadPlayer[] = team.assigned.map((player) => ({
       playerId: player.id,
       name: player.name,
-      position: assignPosition(captain, player),
+      position: getPrimaryPosition(player),
       price: STARTING_BID,
     }));
 
@@ -853,29 +910,41 @@ export async function autoGenerateTeams(
     for (const player of team.assigned) {
       batch.update(doc(paths.players, player.id), {
         status: 'sold',
-        soldToCaptainId: captain.id,
+        soldToCaptainId: target.id,
         soldPrice: STARTING_BID,
       });
     }
 
-    if (captainPlayer && !alreadyInSquad) {
+    if (target.captainPlayer && !target.captainInSquad) {
       additions.unshift({
-        playerId: captainPlayer.id,
-        name: captainPlayer.name,
-        position: assignPosition(captain, captainPlayer),
+        playerId: target.captainPlayer.id,
+        name: target.captainPlayer.name,
+        position: getPrimaryPosition(target.captainPlayer),
         price: 0,
       });
-      batch.update(doc(paths.players, captainPlayer.id), {
+      batch.update(doc(paths.players, target.captainPlayer.id), {
         status: 'sold',
-        soldToCaptainId: captain.id,
+        soldToCaptainId: target.id,
         soldPrice: 0,
       });
     }
 
-    batch.update(doc(paths.captains, captain.id), {
-      squad: [...captain.squad, ...additions],
-      budget: Math.max(0, captain.budget - team.assigned.length * STARTING_BID),
-    });
+    const squad = [...target.squad, ...additions];
+    const budget = Math.max(0, target.budget - team.assigned.length * STARTING_BID);
+
+    if (target.isNew) {
+      batch.set(target.ref, {
+        name: target.name,
+        teamName: target.name,
+        status: 'approved',
+        budget,
+        squad,
+        joinedAt: Date.now(),
+        playerId: target.captainPlayer?.id ?? null,
+      });
+    } else {
+      batch.update(target.ref, { squad, budget });
+    }
   });
 
   for (const player of result.unassigned) {

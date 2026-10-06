@@ -1,9 +1,17 @@
-import type { Captain } from '../types';
-import { addCaptainMidAuction, adjustBudget, movePlayer } from '../lib/auctionService';
+import { useState } from 'react';
+import type { Captain, Player } from '../types';
+import {
+  addCaptainMidAuction,
+  adjustBudget,
+  linkCaptainPlayer,
+  movePlayer,
+} from '../lib/auctionService';
+import { matchCaptainPlayers } from '../lib/auctionLogic';
 
 interface AdminPlayerManagementProps {
   roomId: string;
   captains: Captain[];
+  players: Player[];
   startingBudget: number;
   newCaptainName: string;
   onNewCaptainNameChange: (v: string) => void;
@@ -25,6 +33,7 @@ interface AdminPlayerManagementProps {
 export function AdminPlayerManagement({
   roomId,
   captains,
+  players,
   startingBudget,
   newCaptainName,
   onNewCaptainNameChange,
@@ -44,9 +53,65 @@ export function AdminPlayerManagement({
 }: AdminPlayerManagementProps) {
   const approved = captains.filter((c) => c.status === 'approved');
   const fromSquad = approved.find((c) => c.id === moveFrom)?.squad ?? [];
+  const [linkError, setLinkError] = useState('');
+  const [linkBusy, setLinkBusy] = useState('');
+
+  const matches = matchCaptainPlayers(players, approved);
+  const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+
+  const handleLink = async (captainId: string, playerId: string) => {
+    setLinkBusy(captainId);
+    setLinkError('');
+    try {
+      await linkCaptainPlayer(roomId, captainId, playerId || null, captains);
+    } catch (e) {
+      setLinkError((e as Error).message);
+    } finally {
+      setLinkBusy('');
+    }
+  };
 
   return (
     <div className="admin-mgmt-grid">
+      <div className="admin-mgmt-block admin-mgmt-block-wide">
+        <h4>Captains &amp; Teams</h4>
+        <p className="muted">
+          Pick which player captains each team. Linked players are pinned to their own team and never
+          drafted elsewhere.
+        </p>
+        {approved.length === 0 ? (
+          <p className="muted">No approved captains yet.</p>
+        ) : (
+          <ul className="action-list">
+            {approved.map((captain) => {
+              const linked = matches.get(captain.id);
+              return (
+                <li key={captain.id}>
+                  <span>
+                    <strong>{captain.teamName || captain.name}</strong>
+                    <span className="muted"> ({captain.name})</span>
+                  </span>
+                  <select
+                    value={captain.playerId ?? linked?.id ?? ''}
+                    disabled={linkBusy === captain.id}
+                    onChange={(e) => handleLink(captain.id, e.target.value)}
+                  >
+                    <option value="">No captain player</option>
+                    {sortedPlayers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                        {p.positions.length ? ` · ${p.positions.join('/')}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {linkError && <p className="error">{linkError}</p>}
+      </div>
+
       <div className="admin-mgmt-block">
         <h4>Add Captain</h4>
         <div className="form-row">
