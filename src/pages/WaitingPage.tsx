@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { AuthUserBar } from '../components/AuthUserBar';
+import { AuctionCountdown } from '../components/AuctionCountdown';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useRoomId } from '../hooks/useRoom';
 import { useCaptainSession } from '../hooks/useCaptainSession';
@@ -42,6 +43,7 @@ export function WaitingPage() {
   return (
     <Layout title="Waiting Room" subtitle="Waiting for admin approval" badge={roomId} theme="captain">
       <AuthUserBar />
+      <AuctionCountdown roomId={roomId} state={state} />
 
       {authLoading || !me ? (
         <div className="card center-card">

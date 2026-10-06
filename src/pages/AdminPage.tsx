@@ -33,12 +33,20 @@ import {
   updateTimerSettings,
   addAdminEmail,
   removeAdminEmail,
+  autoGenerateTeams,
+  setAuctionStartTime,
 } from '../lib/auctionService';
 import { PlayerRegistrationForm } from '../components/PlayerRegistrationForm';
 import { AdminPlayerPhotos } from '../components/AdminPlayerPhotos';
 import { parseCsvPlayers, validatePlayerPositions, getUnsoldPlayers, areAllSquadsFull } from '../lib/auctionLogic';
 import { createDefaultPlayerForm, sanitizePlayerForm } from '../lib/playerUtils';
 import { isAuctionPaused, getBidTimerSeconds, getResultTimerSeconds } from '../lib/auctionState';
+import {
+  formatAuctionStartLabel,
+  fromIstInputValue,
+  resolveAuctionStartTime,
+  toIstInputValue,
+} from '../lib/auctionSchedule';
 import { STARTING_BUDGET, TIMER_SECONDS, RESULT_SECONDS } from '../types';
 
 export function AdminPage() {
@@ -66,6 +74,11 @@ export function AdminPage() {
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [adminEmailBusy, setAdminEmailBusy] = useState(false);
   const [adminEmailError, setAdminEmailError] = useState('');
+  const [aiGenerateBusy, setAiGenerateBusy] = useState(false);
+  const [aiGenerateError, setAiGenerateError] = useState('');
+  const [startTimeInput, setStartTimeInput] = useState('');
+  const [startTimeBusy, setStartTimeBusy] = useState(false);
+  const [startTimeError, setStartTimeError] = useState('');
 
   const [form, setForm] = useState(createDefaultPlayerForm);
 
@@ -92,6 +105,11 @@ export function AdminPage() {
     setBidTimerSeconds(getBidTimerSeconds(state));
     setResultTimerSeconds(getResultTimerSeconds(state));
   }, [state.bidTimerSeconds, state.resultTimerSeconds]);
+
+  useEffect(() => {
+    const startsAt = resolveAuctionStartTime(roomId, state);
+    setStartTimeInput(startsAt ? toIstInputValue(startsAt) : '');
+  }, [roomId, state.auctionStartsAt]);
 
   const handlePauseToggle = async () => {
     if (pauseBusy) return;
@@ -166,6 +184,26 @@ export function AdminPage() {
     }
   };
 
+  const handleSaveStartTime = async (clear = false) => {
+    if (startTimeBusy) return;
+    setStartTimeBusy(true);
+    setStartTimeError('');
+    try {
+      if (clear) {
+        await setAuctionStartTime(roomId, null);
+        setStartTimeInput('');
+      } else {
+        const startsAt = fromIstInputValue(startTimeInput);
+        if (!startsAt) throw new Error('Pick a valid date and time.');
+        await setAuctionStartTime(roomId, startsAt);
+      }
+    } catch (e) {
+      setStartTimeError((e as Error).message);
+    } finally {
+      setStartTimeBusy(false);
+    }
+  };
+
   const handleSaveTimers = async () => {
     if (timerSaveBusy) return;
     setTimerSaveBusy(true);
@@ -212,6 +250,24 @@ export function AdminPage() {
     }
   };
 
+  const handleAiGenerateTeams = async () => {
+    if (aiGenerateBusy) return;
+    const confirmed = window.confirm(
+      'Stop the auction and auto-fill every team with the remaining players? Players already won stay with their team. This cannot be undone.',
+    );
+    if (!confirmed) return;
+
+    setAiGenerateBusy(true);
+    setAiGenerateError('');
+    try {
+      await autoGenerateTeams(roomId, players, captains);
+    } catch (e) {
+      setAiGenerateError((e as Error).message);
+    } finally {
+      setAiGenerateBusy(false);
+    }
+  };
+
   const adminLiveControls = isLivePhase ? (
     <div className="admin-live-controls card">
       {['live', 'result'].includes(state.phase) && (
@@ -254,6 +310,21 @@ export function AdminPage() {
           {unsoldActionError && <p className="error">{unsoldActionError}</p>}
         </>
       )}
+      <div className="admin-controls admin-ai-controls">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleAiGenerateTeams}
+          disabled={aiGenerateBusy || approved.length === 0}
+        >
+          {aiGenerateBusy ? 'Generating…' : '🤖 AI Generate Teams'}
+        </button>
+      </div>
+      <p className="muted admin-live-meta">
+        Ends the auction and fills every squad with the remaining players, balanced on overall
+        rating, stamina and goalkeeper coverage. Players already won stay with their team.
+      </p>
+      {aiGenerateError && <p className="error">{aiGenerateError}</p>}
     </div>
   ) : null;
 
@@ -396,6 +467,35 @@ export function AdminPage() {
 
           <section className="card">
             <h3>Configuration</h3>
+            <div className="form-row">
+              <label>Auction start time (IST)</label>
+              <input
+                type="datetime-local"
+                value={startTimeInput}
+                onChange={(e) => setStartTimeInput(e.target.value)}
+              />
+              <p className="muted config-hint">
+                {resolveAuctionStartTime(roomId, state)
+                  ? `Captains and spectators see a countdown to ${formatAuctionStartLabel(
+                      resolveAuctionStartTime(roomId, state) as number,
+                    )} IST.`
+                  : 'No countdown is shown. Set a time to display one on the captain and spectator screens.'}
+              </p>
+              <div className="config-actions">
+                <button type="button" onClick={() => handleSaveStartTime()} disabled={startTimeBusy}>
+                  {startTimeBusy ? 'Saving…' : 'Save Start Time'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={() => handleSaveStartTime(true)}
+                  disabled={startTimeBusy}
+                >
+                  Clear
+                </button>
+              </div>
+              {startTimeError && <p className="error">{startTimeError}</p>}
+            </div>
             <div className="form-row">
               <label>Starting Budget (₹)</label>
               <input

@@ -139,6 +139,8 @@ export interface AuctionState {
   bidTimerSeconds?: number;
   /** Seconds to show sold/unsold result before next player. Default 10. */
   resultTimerSeconds?: number;
+  /** Scheduled kickoff (epoch ms) shown as a countdown to captains and spectators. */
+  auctionStartsAt?: number | null;
 }
 
 export interface PlayerFormData {

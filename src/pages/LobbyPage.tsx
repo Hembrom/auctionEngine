@@ -9,6 +9,7 @@ import { MySquadPanel } from '../components/MySquadPanel';
 import { SpectatorBanner } from '../components/SpectatorBanner';
 import { CaptainDashboard } from '../components/CaptainDashboard';
 import { AuthUserBar } from '../components/AuthUserBar';
+import { AuctionCountdown } from '../components/AuctionCountdown';
 import { useCaptainSession } from '../hooks/useCaptainSession';
 import { useRequireCaptainLogin } from '../hooks/useRequireCaptainLogin';
 import { useAuth } from '../context/AuthContext';
@@ -67,6 +68,7 @@ function LobbyPageCaptain() {
   return (
     <>
       {me && <CaptainIdentityBar captain={me} />}
+      <AuctionCountdown roomId={roomId} state={state} />
       {me && <MySquadPanel captain={me} />}
 
       <p className="players-nav">
@@ -136,6 +138,7 @@ function LobbyPageSpectator() {
   return (
     <>
       <SpectatorBanner />
+      <AuctionCountdown roomId={roomId} state={state} />
       <p className="players-nav">
         <Link to={`/room/${roomId}/players`} className="btn-link">
           Browse Players

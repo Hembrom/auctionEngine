@@ -1878,6 +1878,67 @@ button:disabled {
   margin: 0;
 }
 
+.admin-ai-controls {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.auction-countdown {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.auction-countdown-label {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.auction-countdown-time {
+  margin: 0.25rem 0 0.75rem;
+  font-weight: 600;
+}
+
+.auction-countdown-live {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.auction-countdown-grid {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.auction-countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 3.5rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auction-countdown-unit strong {
+  font-size: 1.6rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.auction-countdown-unit span {
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
 .admin-mgmt-grid {
   display: grid;
   gap: 1rem;

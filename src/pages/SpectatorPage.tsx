@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { FirebaseBanner, FirebaseErrorBanner } from '../components/FirebaseBanner';
 import { SpectatorDashboardSections } from '../components/SpectatorDashboardSections';
+import { AuctionCountdown } from '../components/AuctionCountdown';
 import { useAuctionData } from '../hooks/useAuctionData';
 import { useAuctionEngine } from '../hooks/useAuctionEngine';
 import { useRoomId } from '../hooks/useRoom';
@@ -42,6 +43,8 @@ export function SpectatorPage() {
           <p className="connection-status">
             Room <strong>{roomId}</strong> · {state.phase}
           </p>
+
+          <AuctionCountdown roomId={roomId} state={state} />
 
           <SpectatorDashboardSections
             roomId={roomId}

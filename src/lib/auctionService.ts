@@ -28,6 +28,7 @@ import type {
   SquadPlayer,
 } from '../types';
 import {
+  SQUAD_SIZE,
   STARTING_BID,
   STARTING_BUDGET,
 } from '../types';
@@ -40,7 +41,10 @@ import {
   isAuctionComplete,
   normalizeCaptainLabel,
   shouldSellOnOptOut,
+  shuffleArray,
 } from './auctionLogic';
+import { generateBalancedNTeams } from './teamGenerator';
+import type { TeamSeed } from './teamGenerator';
 import { isValidRoomSlug, slugifyRoomName } from './roomUtils';
 import { getBidTimerSeconds, getResultTimerSeconds, isAuctionPaused } from './auctionState';
 import { normalizePlayer } from './playerUtils';
@@ -382,6 +386,14 @@ export async function updateTimerSettings(
     bidTimerSeconds: Math.max(5, Math.round(bidTimerSeconds)),
     resultTimerSeconds: Math.max(3, Math.round(resultTimerSeconds)),
   });
+}
+
+/** Pass null to hide the countdown entirely. */
+export async function setAuctionStartTime(
+  roomId: string,
+  startsAt: number | null,
+): Promise<void> {
+  await updateDoc(roomPaths(roomId).room, { auctionStartsAt: startsAt });
 }
 
 /** Grant another Firebase-authenticated user admin access to this room by email. */
@@ -758,6 +770,107 @@ export async function restartUnsoldRound(roomId: string, players: Player[]): Pro
     pausedRemainingMs: null,
     optedOutCaptainIds: [],
   });
+}
+
+export interface AutoGenerateTeamsSummary {
+  teamCount: number;
+  assignedCount: number;
+  unassignedCount: number;
+  ratingDifference: number;
+  teamsWithoutGoalkeeper: string[];
+}
+
+/**
+ * Admin escape hatch: stop bidding and fill every approved captain's squad with the
+ * remaining players using the balanced N-team generator. Already-won players stay put.
+ */
+export async function autoGenerateTeams(
+  roomId: string,
+  players: Player[],
+  captains: Captain[],
+): Promise<AutoGenerateTeamsSummary> {
+  const paths = roomPaths(roomId);
+  const approved = captains.filter((c) => c.status === 'approved');
+  if (approved.length === 0) {
+    throw new Error('Approve at least one captain before generating teams.');
+  }
+
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const pool = players.filter((p) => !p.isCaptain && p.status !== 'sold');
+
+  const seeds: TeamSeed[] = approved.map((captain) => ({
+    id: captain.id,
+    name: captain.teamName || captain.name,
+    locked: captain.squad
+      .map((entry) => byId.get(entry.playerId))
+      .filter((p): p is Player => !!p),
+  }));
+
+  const totalSlots = approved.reduce((sum, c) => sum + c.squad.length, 0) + pool.length;
+  const baseSize = Math.min(SQUAD_SIZE, Math.floor(totalSlots / approved.length));
+  const bonusCount = baseSize < SQUAD_SIZE ? totalSlots - baseSize * approved.length : 0;
+  const bonusTeams = new Set(
+    shuffleArray(approved.map((_, i) => i)).slice(0, bonusCount),
+  );
+  const teamSizes = approved.map((captain, index) =>
+    Math.max(captain.squad.length, baseSize + (bonusTeams.has(index) ? 1 : 0)),
+  );
+
+  const result = generateBalancedNTeams(pool, teamSizes, seeds);
+
+  const batch = writeBatch(db);
+  let assignedCount = 0;
+
+  result.teams.forEach((team, index) => {
+    const captain = approved[index];
+    const additions: SquadPlayer[] = team.assigned.map((player) => ({
+      playerId: player.id,
+      name: player.name,
+      position: assignPosition(captain, player),
+      price: STARTING_BID,
+    }));
+
+    assignedCount += additions.length;
+
+    for (const player of team.assigned) {
+      batch.update(doc(paths.players, player.id), {
+        status: 'sold',
+        soldToCaptainId: captain.id,
+        soldPrice: STARTING_BID,
+      });
+    }
+
+    batch.update(doc(paths.captains, captain.id), {
+      squad: [...captain.squad, ...additions],
+      budget: Math.max(0, captain.budget - additions.length * STARTING_BID),
+    });
+  });
+
+  for (const player of result.unassigned) {
+    batch.update(doc(paths.players, player.id), { status: 'unsold' });
+  }
+
+  batch.update(paths.room, {
+    phase: 'ended',
+    currentPlayerId: null,
+    bidDeadline: null,
+    currentBid: null,
+    resultDisplay: null,
+    resultEndsAt: null,
+    paused: false,
+    pausedRemainingMs: null,
+    optedOutCaptainIds: [],
+  });
+
+  await batch.commit();
+
+  return {
+    teamCount: result.teams.length,
+    assignedCount,
+    unassignedCount: result.unassigned.length,
+    ratingDifference: result.ratingDifference,
+    teamsWithoutGoalkeeper: result.teamsWithoutGoalkeeper,
+  };
 }
 
 export async function endAuction(roomId: string): Promise<void> {
