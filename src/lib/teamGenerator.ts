@@ -219,6 +219,24 @@ function enforceStaminaLeaderSplit(teams: GeneratedTeam[], leaderIds: Set<string
   }
 }
 
+/** Last resort: move a spare keeper from a team holding two to a team holding none. */
+function redistributeGoalkeepers(teams: GeneratedTeam[]): void {
+  for (let pass = 0; pass < teams.length; pass++) {
+    const needy = teams.findIndex((team) => goalkeeperCount(team) === 0);
+    const donor = teams.findIndex((team) => goalkeeperCount(team) > 1);
+    if (needy < 0 || donor < 0) return;
+
+    const keeper = teams[donor].assigned.find(isGoalkeeper);
+    const candidates = teams[needy].assigned.filter((p) => !isGoalkeeper(p));
+    if (!keeper || candidates.length === 0) return;
+
+    const closest = candidates.reduce((best, player) =>
+      Math.abs(ovr(player) - ovr(keeper)) < Math.abs(ovr(best) - ovr(keeper)) ? player : best,
+    );
+    swapPlayers(teams[donor], keeper, teams[needy], closest);
+  }
+}
+
 /** Random-but-safe swaps so "shuffle again" produces a different yet equally balanced split. */
 function injectTeamVariety(teams: GeneratedTeam[]): void {
   if (teams.length < 2) return;
@@ -307,12 +325,25 @@ export function generateBalancedNTeams(
   optimizeTeamBalance(teams, (p) => p.stamina, STAMINA_TOLERANCE);
   enforceStaminaLeaderSplit(teams, leaderIds);
 
-  // 6. Weak players go to whichever team with room is currently the weakest.
-  for (const player of shuffleArray(weakest)) {
+  // 6. Weak players go to whichever team with room is currently the weakest,
+  //    except weak keepers, which first cover any team still without one.
+  const leftovers = shuffleArray(weakest);
+  const hasRoom = (index: number) =>
+    teams[index].locked.length + teams[index].assigned.length < teamSizes[index];
+
+  teams.forEach((team, index) => {
+    if (goalkeeperCount(team) > 0 || !hasRoom(index)) return;
+    const keeper = leftovers.find(isGoalkeeper);
+    if (!keeper) return;
+    take(leftovers, keeper);
+    team.assigned.push(keeper);
+  });
+
+  for (const player of leftovers) {
     let targetIndex = -1;
     let lowestTotal = Number.POSITIVE_INFINITY;
     teams.forEach((team, index) => {
-      if (team.locked.length + team.assigned.length >= teamSizes[index]) return;
+      if (!hasRoom(index)) return;
       const total = teamValue(team, ovr);
       if (total < lowestTotal) {
         lowestTotal = total;
@@ -327,6 +358,7 @@ export function generateBalancedNTeams(
   }
 
   // 7. Variety pass + final goalkeeper audit.
+  redistributeGoalkeepers(teams);
   injectTeamVariety(teams);
 
   const teamsWithoutGoalkeeper = teams

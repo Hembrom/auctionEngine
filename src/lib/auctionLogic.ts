@@ -108,6 +108,29 @@ export function normalizeCaptainLabel(value: string): string {
   return value.trim().toLowerCase();
 }
 
+/** Links captain-marked players to their captain record by name, one player per captain. */
+export function matchCaptainPlayers(
+  players: Player[],
+  captains: Captain[],
+): Map<string, Player> {
+  const captainPlayers = players.filter((p) => p.isCaptain);
+  const claimed = new Set<string>();
+  const matches = new Map<string, Player>();
+
+  for (const captain of captains) {
+    const match = captainPlayers.find(
+      (p) =>
+        !claimed.has(p.id) &&
+        normalizeCaptainLabel(p.name) === normalizeCaptainLabel(captain.name),
+    );
+    if (!match) continue;
+    claimed.add(match.id);
+    matches.set(captain.id, match);
+  }
+
+  return matches;
+}
+
 export function getOtherApprovedCaptainIds(
   captains: Captain[],
   currentBidderId?: string,

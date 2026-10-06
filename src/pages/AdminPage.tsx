@@ -38,7 +38,7 @@ import {
 } from '../lib/auctionService';
 import { PlayerRegistrationForm } from '../components/PlayerRegistrationForm';
 import { AdminPlayerPhotos } from '../components/AdminPlayerPhotos';
-import { parseCsvPlayers, validatePlayerPositions, getUnsoldPlayers, areAllSquadsFull } from '../lib/auctionLogic';
+import { parseCsvPlayers, validatePlayerPositions, getUnsoldPlayers, areAllSquadsFull, matchCaptainPlayers } from '../lib/auctionLogic';
 import { createDefaultPlayerForm, sanitizePlayerForm } from '../lib/playerUtils';
 import { isAuctionPaused, getBidTimerSeconds, getResultTimerSeconds } from '../lib/auctionState';
 import {
@@ -92,6 +92,10 @@ export function AdminPage() {
   const isPaused = isAuctionPaused(state);
   const countdown = useCountdown(state.bidDeadline, isPaused, state.pausedRemainingMs);
   const isLivePhase = ['live', 'result', 'unsold'].includes(state.phase);
+  const unmatchedCaptains = (() => {
+    const matches = matchCaptainPlayers(players, approved);
+    return approved.filter((c) => !matches.has(c.id)).map((c) => c.name);
+  })();
 
   useAuctionEngine(roomId, state, players, captains);
 
@@ -282,10 +286,16 @@ export function AdminPage() {
       </div>
       <p className="muted admin-live-meta">
         Skips bidding and fills every squad with the remaining players, balanced on overall rating,
-        stamina and goalkeeper coverage. Players already won stay with their team, then the auction
-        is finished.
+        stamina and goalkeeper coverage. Captain-marked players are pinned to their own team, players
+        already won stay put, then the auction is finished.
       </p>
       {approved.length === 0 && <p className="muted">Approve at least one captain first.</p>}
+      {unmatchedCaptains.length > 0 && (
+        <p className="muted">
+          No captain-marked player matches: <strong>{unmatchedCaptains.join(', ')}</strong>. Mark a
+          player with the exact same name to pin them to that team.
+        </p>
+      )}
       {aiGenerateError && <p className="error">{aiGenerateError}</p>}
     </>
   );

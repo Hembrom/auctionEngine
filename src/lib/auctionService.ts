@@ -39,6 +39,7 @@ import {
   createDefaultAuctionState,
   formatSoldMessage,
   isAuctionComplete,
+  matchCaptainPlayers,
   normalizeCaptainLabel,
   shouldSellOnOptOut,
   shuffleArray,
@@ -782,7 +783,8 @@ export interface AutoGenerateTeamsSummary {
 
 /**
  * Admin escape hatch: stop bidding and fill every approved captain's squad with the
- * remaining players using the balanced N-team generator. Already-won players stay put.
+ * remaining players using the balanced N-team generator. Already-won players stay put,
+ * and each captain-marked player is pinned to their own team.
  */
 export async function autoGenerateTeams(
   roomId: string,
@@ -798,22 +800,36 @@ export async function autoGenerateTeams(
   const byId = new Map(players.map((p) => [p.id, p]));
   const pool = players.filter((p) => !p.isCaptain && p.status !== 'sold');
 
-  const seeds: TeamSeed[] = approved.map((captain) => ({
-    id: captain.id,
-    name: captain.teamName || captain.name,
-    locked: captain.squad
-      .map((entry) => byId.get(entry.playerId))
-      .filter((p): p is Player => !!p),
-  }));
+  // Captain-marked players are pinned to their own team and never enter the pool.
+  const captainMatches = matchCaptainPlayers(players, approved);
+  const captainEntries = approved.map((captain) => {
+    const player = captainMatches.get(captain.id) ?? null;
+    const alreadyInSquad = !!player && captain.squad.some((e) => e.playerId === player.id);
+    return { player, alreadyInSquad };
+  });
 
-  const totalSlots = approved.reduce((sum, c) => sum + c.squad.length, 0) + pool.length;
+  const seeds: TeamSeed[] = approved.map((captain, index) => {
+    const locked = captain.squad
+      .map((entry) => byId.get(entry.playerId))
+      .filter((p): p is Player => !!p);
+    const { player, alreadyInSquad } = captainEntries[index];
+    if (player && !alreadyInSquad) locked.push(player);
+    return {
+      id: captain.id,
+      name: captain.teamName || captain.name,
+      locked,
+    };
+  });
+
+  const lockedCounts = seeds.map((seed) => seed.locked?.length ?? 0);
+  const totalSlots = lockedCounts.reduce((sum, n) => sum + n, 0) + pool.length;
   const baseSize = Math.min(SQUAD_SIZE, Math.floor(totalSlots / approved.length));
   const bonusCount = baseSize < SQUAD_SIZE ? totalSlots - baseSize * approved.length : 0;
   const bonusTeams = new Set(
     shuffleArray(approved.map((_, i) => i)).slice(0, bonusCount),
   );
-  const teamSizes = approved.map((captain, index) =>
-    Math.max(captain.squad.length, baseSize + (bonusTeams.has(index) ? 1 : 0)),
+  const teamSizes = approved.map((_, index) =>
+    Math.max(lockedCounts[index], baseSize + (bonusTeams.has(index) ? 1 : 0)),
   );
 
   const result = generateBalancedNTeams(pool, teamSizes, seeds);
@@ -823,6 +839,8 @@ export async function autoGenerateTeams(
 
   result.teams.forEach((team, index) => {
     const captain = approved[index];
+    const { player: captainPlayer, alreadyInSquad } = captainEntries[index];
+
     const additions: SquadPlayer[] = team.assigned.map((player) => ({
       playerId: player.id,
       name: player.name,
@@ -840,9 +858,23 @@ export async function autoGenerateTeams(
       });
     }
 
+    if (captainPlayer && !alreadyInSquad) {
+      additions.unshift({
+        playerId: captainPlayer.id,
+        name: captainPlayer.name,
+        position: assignPosition(captain, captainPlayer),
+        price: 0,
+      });
+      batch.update(doc(paths.players, captainPlayer.id), {
+        status: 'sold',
+        soldToCaptainId: captain.id,
+        soldPrice: 0,
+      });
+    }
+
     batch.update(doc(paths.captains, captain.id), {
       squad: [...captain.squad, ...additions],
-      budget: Math.max(0, captain.budget - additions.length * STARTING_BID),
+      budget: Math.max(0, captain.budget - team.assigned.length * STARTING_BID),
     });
   });
 
