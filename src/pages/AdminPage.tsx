@@ -423,6 +423,7 @@ export function AdminPage() {
         playerManagement={
           <AdminPlayerManagement
             roomId={roomId}
+            phase={state.phase}
             captains={captains}
             players={players}
             startingBudget={state.startingBudget || startingBudget}

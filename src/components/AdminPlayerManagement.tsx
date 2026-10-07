@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import type { Captain, Player } from '../types';
+import type { AuctionPhase, Captain, Player } from '../types';
 import {
   addCaptainMidAuction,
   adjustBudget,
   linkCaptainPlayer,
   movePlayer,
+  removeCaptain,
 } from '../lib/auctionService';
 import { matchCaptainPlayers } from '../lib/auctionLogic';
 
 interface AdminPlayerManagementProps {
   roomId: string;
+  phase: AuctionPhase;
   captains: Captain[];
   players: Player[];
   startingBudget: number;
@@ -32,6 +34,7 @@ interface AdminPlayerManagementProps {
 
 export function AdminPlayerManagement({
   roomId,
+  phase,
   captains,
   players,
   startingBudget,
@@ -55,9 +58,12 @@ export function AdminPlayerManagement({
   const fromSquad = approved.find((c) => c.id === moveFrom)?.squad ?? [];
   const [linkError, setLinkError] = useState('');
   const [linkBusy, setLinkBusy] = useState('');
+  const [removeError, setRemoveError] = useState('');
+  const [removeBusy, setRemoveBusy] = useState('');
 
   const matches = matchCaptainPlayers(players, approved);
   const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+  const canRemoveCaptains = ['setup', 'waiting', 'lobby'].includes(phase);
 
   const handleLink = async (captainId: string, playerId: string) => {
     setLinkBusy(captainId);
@@ -68,6 +74,18 @@ export function AdminPlayerManagement({
       setLinkError((e as Error).message);
     } finally {
       setLinkBusy('');
+    }
+  };
+
+  const handleRemove = async (captain: Captain) => {
+    setRemoveBusy(captain.id);
+    setRemoveError('');
+    try {
+      await removeCaptain(roomId, captain.id, captains);
+    } catch (e) {
+      setRemoveError((e as Error).message);
+    } finally {
+      setRemoveBusy('');
     }
   };
 
@@ -102,14 +120,25 @@ export function AdminPlayerManagement({
                         {p.name}
                         {p.positions.length ? ` · ${p.positions.join('/')}` : ''}
                       </option>
-                    ))}
+                  ))}
                   </select>
+                  {canRemoveCaptains && (
+                      <button
+                        type="button"
+                        className="btn-danger"
+                        disabled={removeBusy === captain.id}
+                        onClick={() => handleRemove(captain)}
+                      >
+                        {removeBusy === captain.id ? 'Removing…' : 'Remove'}
+                      </button>
+                  )}
                 </li>
               );
             })}
           </ul>
         )}
         {linkError && <p className="error">{linkError}</p>}
+        {removeError && <p className="error">{removeError}</p>}
       </div>
 
       <div className="admin-mgmt-block">

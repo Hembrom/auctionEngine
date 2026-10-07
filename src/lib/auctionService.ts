@@ -256,6 +256,27 @@ export async function rejectCaptain(roomId: string, captainId: string) {
   await updateDoc(doc(roomPaths(roomId).captains, captainId), { status: 'rejected' });
 }
 
+export async function removeCaptain(
+  roomId: string,
+  captainId: string,
+  captains: Captain[],
+): Promise<void> {
+  const room = await getRoom(roomId);
+  if (!room || !['setup', 'waiting', 'lobby'].includes(room.phase)) {
+    throw new Error('Captains can only be removed before the auction starts.');
+  }
+
+  const captain = captains.find((c) => c.id === captainId);
+  if (!captain) throw new Error('Captain not found.');
+
+  const batch = writeBatch(db);
+  if (captain.playerId) {
+    batch.update(doc(roomPaths(roomId).players, captain.playerId), { isCaptain: false });
+  }
+  batch.delete(doc(roomPaths(roomId).captains, captainId));
+  await batch.commit();
+}
+
 export async function toggleCaptainShortlist(
   roomId: string,
   captainId: string,
