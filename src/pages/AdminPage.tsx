@@ -16,6 +16,7 @@ import { canAccessAdminPanel, isLegacyAdminId } from '../lib/adminAccess';
 import {
   approveCaptain,
   rejectCaptain,
+  removeCaptain,
   addPlayer,
   addPlayersBatch,
   deletePlayer,
@@ -79,6 +80,12 @@ export function AdminPage() {
   const [startTimeInput, setStartTimeInput] = useState('');
   const [startTimeBusy, setStartTimeBusy] = useState(false);
   const [startTimeError, setStartTimeError] = useState('');
+  const [deleteConfirmPlayerId, setDeleteConfirmPlayerId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [removeConfirmCaptainId, setRemoveConfirmCaptainId] = useState<string | null>(null);
+  const [removeCaptainBusy, setRemoveCaptainBusy] = useState(false);
+  const [removeCaptainError, setRemoveCaptainError] = useState('');
 
   const [form, setForm] = useState(createDefaultPlayerForm);
 
@@ -244,6 +251,34 @@ export function AdminPage() {
     if (posError) return;
     await addPlayer(roomId, data);
     setForm(createDefaultPlayerForm());
+  };
+
+  const handleDeletePlayer = async (playerId: string) => {
+    if (deleteBusy) return;
+    setDeleteBusy(true);
+    setDeleteError('');
+    try {
+      await deletePlayer(roomId, playerId);
+      setDeleteConfirmPlayerId(null);
+    } catch (e) {
+      setDeleteError((e as Error).message);
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
+  const handleRemoveCaptain = async (captainId: string) => {
+    if (removeCaptainBusy) return;
+    setRemoveCaptainBusy(true);
+    setRemoveCaptainError('');
+    try {
+      await removeCaptain(roomId, captainId);
+      setRemoveConfirmCaptainId(null);
+    } catch (e) {
+      setRemoveCaptainError((e as Error).message);
+    } finally {
+      setRemoveCaptainBusy(false);
+    }
   };
 
   const handleOpenLobby = async () => {
@@ -492,6 +527,53 @@ export function AdminPage() {
           </section>
 
           <section className="card">
+            <h3>Approved Captains</h3>
+            {approved.length === 0 ? (
+              <p className="muted">No approved captains yet</p>
+            ) : (
+              <>
+                <ul className="action-list">
+                  {approved.map((c) => (
+                    <li key={c.id}>
+                      <span>
+                        {c.name} · <strong>{c.teamName}</strong>
+                        <span className="muted"> · ₹{c.budget}</span>
+                      </span>
+                      {removeConfirmCaptainId === c.id ? (
+                        <div className="btn-group">
+                          <span className="confirm-text">Remove {c.teamName}?</span>
+                          <button
+                            className="btn-small btn-danger"
+                            onClick={() => handleRemoveCaptain(c.id)}
+                            disabled={removeCaptainBusy}
+                          >
+                            {removeCaptainBusy ? 'Removing…' : 'Confirm'}
+                          </button>
+                          <button
+                            className="btn-small"
+                            onClick={() => setRemoveConfirmCaptainId(null)}
+                            disabled={removeCaptainBusy}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="btn-small btn-danger"
+                          onClick={() => setRemoveConfirmCaptainId(c.id)}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                {removeCaptainError && <p className="error">{removeCaptainError}</p>}
+              </>
+            )}
+          </section>
+
+          <section className="card">
             <h3>Configuration</h3>
             <div className="form-row">
               <label>Auction start time (IST)</label>
@@ -633,25 +715,48 @@ export function AdminPage() {
                 </div>
               </div>
               {players.length > 0 && (
-                <ul className="player-list">
-                  {players.map((p) => (
-                    <li key={p.id}>
-                      {p.name} ({p.positions.join('/')})
-                      <button
-                        className="btn-small"
-                        onClick={() => setPlayerCaptain(roomId, p.id, !p.isCaptain)}
-                      >
-                        {p.isCaptain ? 'Remove Captain' : 'Mark Captain'}
-                      </button>
-                      <button
-                        className="btn-small btn-danger"
-                        onClick={() => deletePlayer(roomId, p.id)}
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul className="player-list">
+                    {players.map((p) => (
+                      <li key={p.id}>
+                        {p.name} ({p.positions.join('/')})
+                        <button
+                          className="btn-small"
+                          onClick={() => setPlayerCaptain(roomId, p.id, !p.isCaptain)}
+                        >
+                          {p.isCaptain ? 'Remove Captain' : 'Mark Captain'}
+                        </button>
+                        {deleteConfirmPlayerId === p.id ? (
+                          <>
+                            <span className="confirm-text">Remove {p.name}?</span>
+                            <button
+                              className="btn-small btn-danger"
+                              onClick={() => handleDeletePlayer(p.id)}
+                              disabled={deleteBusy}
+                            >
+                              {deleteBusy ? 'Removing…' : 'Confirm'}
+                            </button>
+                            <button
+                              className="btn-small"
+                              onClick={() => setDeleteConfirmPlayerId(null)}
+                              disabled={deleteBusy}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            className="btn-small btn-danger"
+                            onClick={() => setDeleteConfirmPlayerId(p.id)}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {deleteError && <p className="error">{deleteError}</p>}
+                </>
               )}
             </section>
           )}

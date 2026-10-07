@@ -285,6 +285,12 @@ button:disabled {
   font-size: 0.8rem;
 }
 
+.confirm-text {
+  font-weight: 500;
+  color: var(--accent);
+  margin: 0 0.25rem;
+}
+
 .btn-group {
   display: flex;
   gap: 0.5rem;
@@ -1163,64 +1169,64 @@ button:disabled {
 
 /* Keep the live auction essentials visible together on typical laptop screens. */
 .auction-stack > .player-card-fifa-wrap {
-  width: min(100%, 273px);
+  width: min(100%, 96px);
   margin: 0 auto;
 }
 
 .auction-stack > .player-card-fifa-wrap .player-card-fifa {
-  max-width: 273px;
+  max-width: 96px;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-photo-frame {
-  margin-bottom: 1rem;
+  margin-bottom: 0.35rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-photo-frame .player-photo:not(.player-photo-empty),
 .auction-stack > .player-card-fifa-wrap .fifa-photo-frame .player-photo-empty {
-  max-width: 234px;
-  height: 273px;
-  max-height: 273px;
+  max-width: 82px;
+  height: 96px;
+  max-height: 96px;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-overall,
 .auction-stack > .player-card-fifa-wrap .fifa-position {
-  font-size: 1.95rem;
+  font-size: 0.68rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-position-sm {
-  font-size: 1.05rem;
+  font-size: 0.37rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-position-xs {
-  font-size: 0.75rem;
+  font-size: 0.26rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .player-card-name {
-  font-size: 0.9rem;
+  font-size: 0.31rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-stats-grid {
-  max-width: 208px;
-  gap: 0.3rem 0.9rem;
-  margin-top: 0.6rem;
-  padding-top: 0.5rem;
+  max-width: 73px;
+  gap: 0.1rem 0.31rem;
+  margin-top: 0.21rem;
+  padding-top: 0.18rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-stat-value {
-  font-size: 0.8rem;
+  font-size: 0.28rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-stat-label {
-  font-size: 0.6rem;
+  font-size: 0.21rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-frequency-row {
-  margin-top: 0.45rem;
-  padding: 0.2rem 0.45rem;
+  margin-top: 0.16rem;
+  padding: 0.07rem 0.16rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-frequency-value {
-  font-size: 0.7rem;
+  font-size: 0.25rem;
 }
 
 .auction-stack .bid-hero {

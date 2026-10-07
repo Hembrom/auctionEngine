@@ -256,6 +256,10 @@ export async function rejectCaptain(roomId: string, captainId: string) {
   await updateDoc(doc(roomPaths(roomId).captains, captainId), { status: 'rejected' });
 }
 
+export async function removeCaptain(roomId: string, captainId: string) {
+  await deleteDoc(doc(roomPaths(roomId).captains, captainId));
+}
+
 export async function toggleCaptainShortlist(
   roomId: string,
   captainId: string,

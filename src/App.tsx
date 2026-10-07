@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { HomePage, RoomGuard } from './pages/HomePage';
 import { AdminLoginPage } from './pages/AdminLoginPage';
 import { AdminCreateRoomPage } from './pages/AdminCreateRoomPage';
@@ -23,104 +24,107 @@ function RoomRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/blog/captain-auction-faq" element={<CaptainAuctionFaqPage />} />
-        <Route path="/create" element={<AdminCreateRoomPage />} />
-        <Route path="/login/admin" element={<AdminLoginPage />} />
+    <>
+      <Analytics />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/blog/captain-auction-faq" element={<CaptainAuctionFaqPage />} />
+          <Route path="/create" element={<AdminCreateRoomPage />} />
+          <Route path="/login/admin" element={<AdminLoginPage />} />
 
-        <Route
-          path="/room/:roomId/login"
-          element={
-            <RoomRoute>
-              <CaptainLoginPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId"
-          element={
-            <RoomRoute>
-              <JoinPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/waiting"
-          element={
-            <RoomRoute>
-              <WaitingPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/lobby"
-          element={
-            <RoomRoute>
-              <LobbyPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/auction"
-          element={
-            <RoomRoute>
-              <AuctionPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/final"
-          element={
-            <RoomRoute>
-              <FinalPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/players"
-          element={
-            <RoomRoute>
-              <PlayersPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/spectate"
-          element={
-            <RoomRoute>
-              <SpectatorPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/admin"
-          element={
-            <RoomRoute>
-              <AdminPage />
-            </RoomRoute>
-          }
-        />
-        <Route
-          path="/room/:roomId/admin/auction"
-          element={
-            <RoomRoute>
-              <AdminAuctionPage />
-            </RoomRoute>
-          }
-        />
+          <Route
+            path="/room/:roomId/login"
+            element={
+              <RoomRoute>
+                <CaptainLoginPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId"
+            element={
+              <RoomRoute>
+                <JoinPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/waiting"
+            element={
+              <RoomRoute>
+                <WaitingPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/lobby"
+            element={
+              <RoomRoute>
+                <LobbyPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/auction"
+            element={
+              <RoomRoute>
+                <AuctionPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/final"
+            element={
+              <RoomRoute>
+                <FinalPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/players"
+            element={
+              <RoomRoute>
+                <PlayersPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/spectate"
+            element={
+              <RoomRoute>
+                <SpectatorPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/admin"
+            element={
+              <RoomRoute>
+                <AdminPage />
+              </RoomRoute>
+            }
+          />
+          <Route
+            path="/room/:roomId/admin/auction"
+            element={
+              <RoomRoute>
+                <AdminAuctionPage />
+              </RoomRoute>
+            }
+          />
 
-        {/* Legacy redirects */}
-        <Route path="/admin" element={<Navigate to="/" replace />} />
-        <Route path="/waiting" element={<Navigate to="/" replace />} />
-        <Route path="/lobby" element={<Navigate to="/" replace />} />
-        <Route path="/auction" element={<Navigate to="/" replace />} />
-        <Route path="/final" element={<Navigate to="/" replace />} />
+          {/* Legacy redirects */}
+          <Route path="/admin" element={<Navigate to="/" replace />} />
+          <Route path="/waiting" element={<Navigate to="/" replace />} />
+          <Route path="/lobby" element={<Navigate to="/" replace />} />
+          <Route path="/auction" element={<Navigate to="/" replace />} />
+          <Route path="/final" element={<Navigate to="/" replace />} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 
