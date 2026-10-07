@@ -1169,64 +1169,64 @@ button:disabled {
 
 /* Keep the live auction essentials visible together on typical laptop screens. */
 .auction-stack > .player-card-fifa-wrap {
-  width: min(100%, 187px);
+  width: min(100%, 234px);
   margin: 0 auto;
 }
 
 .auction-stack > .player-card-fifa-wrap .player-card-fifa {
-  max-width: 187px;
+  max-width: 234px;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-photo-frame {
-  margin-bottom: 0.68rem;
+  margin-bottom: 0.85rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-photo-frame .player-photo:not(.player-photo-empty),
 .auction-stack > .player-card-fifa-wrap .fifa-photo-frame .player-photo-empty {
-  max-width: 160px;
-  height: 187px;
-  max-height: 187px;
+  max-width: 200px;
+  height: 234px;
+  max-height: 234px;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-overall,
 .auction-stack > .player-card-fifa-wrap .fifa-position {
-  font-size: 1.33rem;
+  font-size: 1.66rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-position-sm {
-  font-size: 0.73rem;
+  font-size: 0.91rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-position-xs {
-  font-size: 0.51rem;
+  font-size: 0.64rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .player-card-name {
-  font-size: 0.61rem;
+  font-size: 0.76rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-stats-grid {
-  max-width: 143px;
-  gap: 0.20rem 0.61rem;
-  margin-top: 0.40rem;
-  padding-top: 0.35rem;
+  max-width: 179px;
+  gap: 0.25rem 0.76rem;
+  margin-top: 0.50rem;
+  padding-top: 0.44rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-stat-value {
-  font-size: 0.55rem;
+  font-size: 0.69rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-stat-label {
-  font-size: 0.40rem;
+  font-size: 0.50rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-frequency-row {
-  margin-top: 0.31rem;
-  padding: 0.13rem 0.31rem;
+  margin-top: 0.39rem;
+  padding: 0.16rem 0.39rem;
 }
 
 .auction-stack > .player-card-fifa-wrap .fifa-frequency-value {
-  font-size: 0.48rem;
+  font-size: 0.60rem;
 }
 
 .auction-stack .bid-hero {
